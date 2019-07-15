@@ -10,8 +10,19 @@
 
 class Ant
 {
+
+private:
+	bool food=false;
   public:
     Ant ();
+
+	bool isFood() const {
+		return food;
+	}
+
+	void setFood(bool food = false) {
+		this->food = food;
+	}
 };
 
 #endif /* ANT_H_ */

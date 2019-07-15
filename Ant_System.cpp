@@ -1,20 +1,39 @@
 #include <iostream>
-using namespace std;
-#include "Utilities/Graph.h"
-#include <math.h>
+#include <cstdlib>
+#include <random>
 
-void initializateG(Graph g) {
-	for (int a = 0; a < g.getDimMax(); a++)
-		for (int b = 0; b < g.getDimMax(); b++)
-			if (g.isNear(a, b))
-				cout << a << " e " << b << " sono vicini" << endl;
-//			else
-//				cout << a << " e " << b << " non sono vicini" << endl;
-//				g.setAdjacents(a, b);
-}
+#include "Utilities/Graph.h"
+using namespace std;
 
 int main(int argc, char **argv) {
-	Graph g(5);
-	initializateG(g);
+	int dimension = 10;
+	Graph g(dimension);
+	std::random_device dev;
+	std::mt19937 rng(dev());
+	std::uniform_int_distribution<std::mt19937::result_type> dist(0,
+			g.getDimMax() - 1);
+	cout << "BEGIN" << endl;
+	srand(time(0));
+	int randomFood1 = dist(rng);
+	int randomSource1 = randomFood1;
+	while (abs(randomFood1 - randomSource1) < g.getDimMax()/3) {
+		cout << "searching " << randomFood1 << " ----------------" << randomSource1 << "   DIFF :::"<<randomFood1 - randomSource1<<endl;
+		randomSource1 = dist(rng);
+	}
+	g.setFood(randomFood1);
+	g.setSource(randomSource1);
+	cout << randomFood1 << " ----------------" << randomSource1 << endl;
+	g.createMatrix();
+	int epoch=0;
+	while(true)
+	{
+		if(epoch%100==0)
+			g.generateAnt();
+		g.update();
+		epoch++;
+
+	}
+
+
 	return 0;
 }

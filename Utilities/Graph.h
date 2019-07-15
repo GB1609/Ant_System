@@ -21,11 +21,16 @@ struct Cell {
 	int pheromone;
 	bool source;
 	bool food;
+	Cell() {
+		ant_size = 0;
+		pheromone = 0;
+		food = false;
+		source = false;
+	}
 };
 
 class Graph {
 private:
-	bool **adjacents;
 	Cell **cells;
 	int dim;
 	int max_num;
@@ -34,21 +39,18 @@ public:
 	Graph(int w) {
 		dim = w;
 		max_num = dim * dim;
-		adjacents = (bool**) malloc(dim * sizeof(bool*));
 		cells = (Cell**) malloc(dim * sizeof(Cell*));
-		for (int i = 0; i < dim; i++) {
-			adjacents[i] = (bool*) malloc(dim * sizeof(bool));
+		for (int i = 0; i < dim; i++)
 			cells[i] = (Cell*) malloc(dim * sizeof(Cell));
+	}
+
+	void createMatrix() {
+		for (int a = 0; a < max_num; a++) {
+			pair<int, int> p = intToPair(a);
+			int x = p.first;
+			int y = p.second;
+			cells[x][y] = Cell();
 		}
-	}
-
-	bool**
-	getAdjacents() const {
-		return adjacents;
-	}
-
-	void setAdjacents(int a, int b) const {
-		adjacents[a][b] = true;
 	}
 
 	int getDim() {
@@ -57,14 +59,6 @@ public:
 
 	int getDimMax() {
 		return max_num;
-	}
-
-	void printGAdj() {
-		for (int a = 0; a < dim; a++) {
-			for (int b = 0; b < dim; b++)
-				cout << adjacents[a][b] << " - ";
-			cout << endl;
-		}
 	}
 
 	int pairToInt(int row, int col) {
@@ -136,26 +130,37 @@ public:
 		if (a == b)
 			return false;
 		int l = left(a);
-//		cout << "LEFT:" << l << endl;
 		int r = right(a);
-//		cout << "RIGHT:" << r << endl;
 		int u = up(a);
-//		cout << "UP:" << u << endl;
 		int d = down(a);
-//		cout << "DOWN:" << d << endl;
 		int ul = up_left(a);
-//		cout << "UP-LEFT:" << ul << endl;
 		int ur = up_right(a);
-//		cout << "UP_RIGHT:" << ur << endl;
 		int dl = down_left(a);
-//		cout << "DOWN_LEFT:" << dl << endl;
 		int dr = down_right(a);
-//		cout << "DOWN_RIGHT:" << dr << endl;
 		return b == l || b == r || b == u || b == d || b == ul || b == ur
 				|| b == dl || b == dr;
 	}
 	void pheromone_update() {
 
+	}
+
+	void setFood(int a) {
+		pair<int, int> p = intToPair(a);
+		int x = p.first;
+		int y = p.second;
+		cells[x][y].food = true;
+	}
+
+	void setSource(int a) {
+		pair<int, int> p = intToPair(a);
+		int x = p.first;
+		int y = p.second;
+		cells[x][y].source = true;
+	}
+
+	void generateAnt() {
+	}
+	void update() {
 	}
 };
 
