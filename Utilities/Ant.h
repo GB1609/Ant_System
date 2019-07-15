@@ -8,19 +8,20 @@
 #ifndef ANT_H_
 #define ANT_H_
 
-class Ant
-{
+class Ant {
 
 private:
-	bool food=false;
-  public:
-    Ant ();
+	bool food;
+public:
+	Ant() {
+		food = false;
+	}
 
 	bool isFood() const {
 		return food;
 	}
 
-	void setFood(bool food = false) {
+	void setFood(bool food) {
 		this->food = food;
 	}
 };

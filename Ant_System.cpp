@@ -6,7 +6,7 @@
 using namespace std;
 
 int main(int argc, char **argv) {
-	int dimension = 10;
+	int dimension = 5;
 	Graph g(dimension);
 	std::random_device dev;
 	std::mt19937 rng(dev());
@@ -16,24 +16,23 @@ int main(int argc, char **argv) {
 	srand(time(0));
 	int randomFood1 = dist(rng);
 	int randomSource1 = randomFood1;
-	while (abs(randomFood1 - randomSource1) < g.getDimMax()/3) {
-		cout << "searching " << randomFood1 << " ----------------" << randomSource1 << "   DIFF :::"<<randomFood1 - randomSource1<<endl;
+	while (abs(randomFood1 - randomSource1) < g.getDimMax() / 3) {
+		cout << "searching " << randomFood1 << " ----------------"
+				<< randomSource1 << "   DIFF :::" << randomFood1 - randomSource1
+				<< endl;
 		randomSource1 = dist(rng);
 	}
+	cout <<"LOCATIONS   "<<  randomFood1 << " ----------------" << randomSource1 << endl;
+	g.intitializate_matrix();
 	g.setFood(randomFood1);
 	g.setSource(randomSource1);
-	cout << randomFood1 << " ----------------" << randomSource1 << endl;
-	g.createMatrix();
-	int epoch=0;
-	while(true)
-	{
-		if(epoch%100==0)
-			g.generateAnt();
+	int epoch = 0;
+	g.printLocations();
+	while (g.there_is_food() && epoch < 100) {
+		if (epoch % 10 == 0)
+			g.generate_ants(epoch);
 		g.update();
 		epoch++;
-
 	}
-
-
 	return 0;
 }
