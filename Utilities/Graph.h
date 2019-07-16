@@ -204,8 +204,9 @@ public:
 		return p;
 	}
 
-	Direction getDirectionAnt(int a) //guarda se ce feromone attorno e prende quello con quantita maggiore (a caso altrimenti)
+	Direction find_direction_without_food(Ant *ant) //guarda se ce feromone attorno e prende quello con quantita maggiore (a caso altrimenti)
 			{
+		int a = ant->getCurrentPosition();
 		int l = getPheromoneCell(left(a));
 		int r = getPheromoneCell(right(a));
 		int u = getPheromoneCell(up(a));
@@ -230,6 +231,7 @@ public:
 			}
 		} else
 			toCheck = max_pheromone.second;
+//		cerr << "DIREZIONE GENERATA" << toCheck << endl;
 		switch (toCheck) {
 		case 0:
 			return LEFT;
@@ -249,6 +251,45 @@ public:
 			return DOWN_RIGHT;
 		default:
 			cerr << "SEND NEW DIRECTION" << endl;
+			return BORN;
+		}
+	}
+
+	Direction come_back_with_food(Ant *ant) {
+		int a = ant->getCurrentPosition();
+		int possible_move[] = { left(a), right(a), up(a), down(a), up_left(a),
+				up_right(a), down_left(a), down_right(a) };
+		int toCheck = -1;
+		int max = max_num;
+		for (int d = 0; d < POSSIBLE_DIRECTION; d++)
+			if (possible_move[d] == ant->getMySource()) {
+				toCheck = d;
+				break;
+			} else if (getPheromoneCell(possible_move[d])
+					<= ant->getToIncreasePheromon()
+					&& getPheromoneCell(possible_move[d]) >max
+					&& getPheromoneCell(possible_move[d]) > 0) {
+				toCheck = d;
+				max = possible_move[d];
+			}
+		switch (toCheck) {
+		case 0:
+			return LEFT;
+		case 1:
+			return RIGHT;
+		case 2:
+			return UP;
+		case 3:
+			return DOWN;
+		case 4:
+			return UP_LEFT;
+		case 5:
+			return UP_RIGHT;
+		case 6:
+			return DOWN_LEFT;
+		case 7:
+			return DOWN_RIGHT;
+		default:
 			return BORN;
 		}
 	}
@@ -311,22 +352,32 @@ public:
 		int x = p.first;
 		int y = p.second;
 		int toIncreasePheromon = ant->getToIncreasePheromon();
-		if(cells[x][y].pheromone<toIncreasePheromon) cells[x][y].pheromone=toIncreasePheromon;
-		int expand=cells[x][y].pheromone%max_num+1;
-//		propagate(a, expand, toIncreasePheromon - 1, LEFT);
-//		propagate(a, expand, toIncreasePheromon - 1, RIGHT);
-//		propagate(a, expand, toIncreasePheromon - 1, UP);
-//		propagate(a, expand, toIncreasePheromon - 1, DOWN);
-//		propagate(a, expand, toIncreasePheromon - 1, DOWN_LEFT);
-//		propagate(a, expand, toIncreasePheromon - 1, DOWN_RIGHT);
-//		propagate(a, expand,toIncreasePheromon - 1, UP_RIGHT);
-//		propagate(a, expand, toIncreasePheromon - 1, UP_LEFT);
+		if (cells[x][y].pheromone < toIncreasePheromon)
+		cells[x][y].pheromone = toIncreasePheromon;
+//		else {
+//			cells[x][y].pheromone = toIncreasePheromon;
+//			int expand = 0;
+//			int c = left(a);
+//			while (getPheromoneCell(c) > 0) {
+//				expand++;
+//				c = left(c);
+//			}
+//			int dec = toIncreasePheromon * 0.2;
+//			propagate(a, expand, toIncreasePheromon - dec, LEFT);
+//			propagate(a, expand, toIncreasePheromon - dec, RIGHT);
+//			propagate(a, expand, toIncreasePheromon - dec, UP);
+//			propagate(a, expand, toIncreasePheromon - dec, DOWN);
+//			propagate(a, expand, toIncreasePheromon - dec, DOWN_LEFT);
+//			propagate(a, expand, toIncreasePheromon - dec, DOWN_RIGHT);
+//			propagate(a, expand, toIncreasePheromon - dec, UP_RIGHT);
+//			propagate(a, expand, toIncreasePheromon - dec, UP_LEFT);
+//		}
 		ant->decreaseToIncreasePheromon();
 	}
 	void decrease_pheromone() {
 		for (int a = 0; a < dim; a++)
 			for (int b = 0; b < dim; b++)
-				if (cells[a][b].pheromone > 0)
+				if (cells[a][b].pheromone > 1)
 					cells[a][b].pheromone -= 1; //every turn decrease pheromone in cells
 	}
 
@@ -336,26 +387,31 @@ public:
 			if (ants[f].isFood()) {
 				propagate_pheromone(&ants[f]);
 				int newPosition;
-//				Direction d = getDirectionAnt(ants[f].getCurrentPosition());
-//				newPosition = ant_new_location(ants[f].getCurrentPosition(),
-//						d);
-//				if (getPheromoneCell(newPosition) != max_num ) {
+				Direction d = come_back_with_food(&ants[f]);
+				newPosition = ant_new_location(ants[f].getCurrentPosition(), d);
+				if (getPheromoneCell(newPosition) == -1) {
 					Direction come_to_souce = ants[f].getLastDirection();
 					newPosition = ant_new_location(ants[f].getCurrentPosition(),
 							come_to_souce);
 					ants[f].remove_move();
-//				}
+				}
 				ants[f].setCurrentPosition(newPosition);
 				pair<int, int> p = intToPair(newPosition);
 				int x = p.first;
 				int y = p.second;
+				ants[f].update_pass_to_come_back();
 				if (cells[x][y].source) {
+					cells[x][y].pheromone = 1;
+					cout << "FORMICA NUMERO " << f << "  cancellata"
+							<< " PASSI PER TROVARE CIBO-->"
+							<< ants[f].getPassToFind()
+							<< " PASSI PER TORNARE-->"
+							<< ants[f].getPassToComeBack() << endl;
 					ants.erase(ants.begin() + f);
-					cout << "FORMICA NUMERO " << f << "  cancellata" << endl;
 					f--;
 				}
 			} else {
-				Direction d = getDirectionAnt(ants[f].getCurrentPosition());
+				Direction d = find_direction_without_food(&ants[f]);
 				ants[f].addMove(d);
 				int newPositon = ant_new_location(ants[f].getCurrentPosition(),
 						d);
@@ -365,9 +421,11 @@ public:
 				pair<int, int> p = intToPair(newPositon);
 				int x = p.first;
 				int y = p.second;
-				if (cells[x][y].food)
+				ants[f].update_pass_to_find();
+				if (cells[x][y].food) {
 					ants[f].setFood(true);
-				decrease_food(newPositon);
+					decrease_food(newPositon);
+				}
 			}
 			f++;
 		}
@@ -391,6 +449,8 @@ public:
 			return up_left(pos);
 		case DOWN_LEFT:
 			return down_left(pos);
+		case BORN:
+			return -1;
 		default:
 			cerr << "ERRORE IN NEW LOCATION" << endl;
 			return -1;

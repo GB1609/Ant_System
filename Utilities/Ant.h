@@ -12,15 +12,20 @@ class Ant {
 
 private:
 	bool food;
+	int mySource;
 	int toIncreasePheromon;
 	int currentPosition;
+	int pass_to_find = 0;
+	int pass_to_come_back = 0;
 	vector<Direction> path;
 public:
 	Ant(int pos, int toI) {
 		toIncreasePheromon = toI;
 		food = false;
 		currentPosition = pos;
+		mySource = pos;
 	}
+
 
 	bool isFood() const {
 		return food;
@@ -91,8 +96,48 @@ public:
 	}
 
 	void decreaseToIncreasePheromon() {
-		if (toIncreasePheromon > 0)
+		if (toIncreasePheromon > 2)
 			toIncreasePheromon -= 1;
+	}
+
+	int getPassToComeBack() const {
+		return pass_to_come_back;
+	}
+
+	void update_pass_to_come_back() {
+		pass_to_come_back++;
+	}
+
+	int getPassToFind() const {
+		return pass_to_find;
+	}
+
+	void update_pass_to_find() {
+		pass_to_find++;
+	}
+
+	const vector<Direction>& getPath() const {
+		return path;
+	}
+
+	void setToIncreasePheromon(int toIncreasePheromon) {
+		this->toIncreasePheromon = toIncreasePheromon;
+	}
+
+	int getMySource() const {
+		return mySource;
+	}
+
+	void setMySource(int mySource) {
+		this->mySource = mySource;
+	}
+
+	void setPassToComeBack(int passToComeBack = 0) {
+		pass_to_come_back = passToComeBack;
+	}
+
+	void setPassToFind(int passToFind = 0) {
+		pass_to_find = passToFind;
 	}
 };
 
