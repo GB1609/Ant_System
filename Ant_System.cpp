@@ -6,7 +6,7 @@
 using namespace std;
 
 int main(int argc, char **argv) {
-	int dimension = 50;
+	int dimension = 10;
 	Graph g(dimension);
 	std::random_device dev;
 	std::mt19937 rng(dev());

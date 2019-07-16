@@ -91,7 +91,8 @@ public:
 	}
 
 	void decreaseToIncreasePheromon() {
-		(toIncreasePheromon > 0) ? toIncreasePheromon-=5 : toIncreasePheromon;
+		if (toIncreasePheromon > 0)
+			toIncreasePheromon -= 1;
 	}
 };
 

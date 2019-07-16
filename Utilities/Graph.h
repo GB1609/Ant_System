@@ -310,16 +310,17 @@ public:
 		pair<int, int> p = intToPair(a);
 		int x = p.first;
 		int y = p.second;
-		cells[x][y].pheromone += ant->getToIncreasePheromon();
+		int toIncreasePheromon = ant->getToIncreasePheromon();
+		if(cells[x][y].pheromone<toIncreasePheromon) cells[x][y].pheromone=toIncreasePheromon;
 		int expand=cells[x][y].pheromone%max_num+1;
-		propagate(a, expand, ant->getToIncreasePheromon() - 1, LEFT);
-		propagate(a, expand, ant->getToIncreasePheromon() - 1, RIGHT);
-		propagate(a, expand, ant->getToIncreasePheromon() - 1, UP);
-		propagate(a, expand, ant->getToIncreasePheromon() - 1, DOWN);
-		propagate(a, expand, ant->getToIncreasePheromon() - 1, DOWN_LEFT);
-		propagate(a, expand, ant->getToIncreasePheromon() - 1, DOWN_RIGHT);
-		propagate(a, expand, ant->getToIncreasePheromon() - 1, UP_RIGHT);
-		propagate(a, expand, ant->getToIncreasePheromon() - 1, UP_LEFT);
+//		propagate(a, expand, toIncreasePheromon - 1, LEFT);
+//		propagate(a, expand, toIncreasePheromon - 1, RIGHT);
+//		propagate(a, expand, toIncreasePheromon - 1, UP);
+//		propagate(a, expand, toIncreasePheromon - 1, DOWN);
+//		propagate(a, expand, toIncreasePheromon - 1, DOWN_LEFT);
+//		propagate(a, expand, toIncreasePheromon - 1, DOWN_RIGHT);
+//		propagate(a, expand,toIncreasePheromon - 1, UP_RIGHT);
+//		propagate(a, expand, toIncreasePheromon - 1, UP_LEFT);
 		ant->decreaseToIncreasePheromon();
 	}
 	void decrease_pheromone() {
@@ -333,17 +334,17 @@ public:
 		int f = 0;
 		while (f < ants.size()) {
 			if (ants[f].isFood()) {
-//				propagate_pheromone(&ants[f]);
+				propagate_pheromone(&ants[f]);
 				int newPosition;
-				Direction d = getDirectionAnt(ants[f].getCurrentPosition());
-				newPosition = ant_new_location(ants[f].getCurrentPosition(),
-						d);
-				if (getPheromoneCell(newPosition) != max_num ) {
+//				Direction d = getDirectionAnt(ants[f].getCurrentPosition());
+//				newPosition = ant_new_location(ants[f].getCurrentPosition(),
+//						d);
+//				if (getPheromoneCell(newPosition) != max_num ) {
 					Direction come_to_souce = ants[f].getLastDirection();
 					newPosition = ant_new_location(ants[f].getCurrentPosition(),
 							come_to_souce);
 					ants[f].remove_move();
-				}
+//				}
 				ants[f].setCurrentPosition(newPosition);
 				pair<int, int> p = intToPair(newPosition);
 				int x = p.first;
