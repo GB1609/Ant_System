@@ -58,19 +58,20 @@ public:
 			toPut = UP_RIGHT;
 			break;
 		default:
-			cout << "ERRORE" << endl;
+			cout << "ERRORE in ADD MOVE" << endl;
 			toPut = BORN;
-
 		}
 		path.push_back(toPut);
 	}
 
-	void remove_move() {
-		path.pop_back();
+	Direction getLastDirection() {
+		if (path.empty())
+			cout << "path in ant emptu" << endl;
+		return path.back();
 	}
 
-	const vector<Direction>& getPath() const {
-		return path;
+	void remove_move() {
+		path.pop_back();
 	}
 
 	int getCurrentPosition() const {
@@ -89,8 +90,8 @@ public:
 		return toIncreasePheromon;
 	}
 
-	void setToIncreasePheromon(int toIncreasePheromon) {
-		this->toIncreasePheromon = toIncreasePheromon;
+	void decreaseToIncreasePheromon() {
+		(toIncreasePheromon > 0) ? toIncreasePheromon-- : toIncreasePheromon;
 	}
 };
 

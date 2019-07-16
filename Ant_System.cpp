@@ -15,29 +15,30 @@ int main(int argc, char **argv) {
 	srand(time(0));
 	int randomFood1 = dist(rng);
 	int randomSource1 = randomFood1;
-	while (abs(randomFood1 - randomSource1) < g.getDimMax() / 3) {
-		cout << "searching " << randomFood1 << " ----------------"
-				<< randomSource1 << "   DIFF :::" << randomFood1 - randomSource1
-				<< endl;
+	while (abs(randomFood1 - randomSource1) < g.getDimMax() / 3)
 		randomSource1 = dist(rng);
-	}
-	cout << "LOCATIONS   " << randomFood1 << " ----------------"
-			<< randomSource1 << endl;
 	g.intitializate_matrix();
+	randomFood1=14;
+	randomSource1=77;
 	g.setFood(randomFood1);
 	g.setSource(randomSource1);
 	g.printLocations();
-
 	int epoch = 0;
+	g.generate_ants();
+	while (g.there_is_food()) {
+			cout << endl<<endl<<"EPOCA: " << epoch << endl;
+			cout << "FOOD REMAINS---> " << g.getTotalFood()
+					<< " ANT REMAINED---->" << g.getAnts().size() << endl
+					<< endl;
 
-	while (g.there_is_food() && epoch < 100000) {
-		if (epoch % 3 == 0)
+		if (epoch % 10 == 0)
 			g.generate_ants();
-		cout << "EPOCA: " << epoch << endl << endl;
-		g.printMatrix();
+		if (epoch % 1000 == 0)
+			g.printMatrix();
 		g.update();
 		epoch++;
 	}
-	cout<<endl<<endl<<"END"<<endl;
+
+	cout << endl << endl << "END";
 	return 0;
 }

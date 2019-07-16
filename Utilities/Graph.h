@@ -159,10 +159,6 @@ public:
 		}
 	}
 
-	void pheromone_update() {
-
-	}
-
 	void setFood(int a) {
 		pair<int, int> p = intToPair(a);
 		foods.push_back(a);
@@ -187,7 +183,7 @@ public:
 	}
 
 	int getPheromoneCell(int a) {
-		if (a == -1)
+		if (a < 0 || a > max_num)
 			return -1;
 		pair<int, int> p = intToPair(a);
 		int x = p.first;
@@ -221,17 +217,16 @@ public:
 		vector<int> possible_move { l, r, u, d, ul, ur, dl, dr };
 		pair<int, int> max_pheromone = max_value_pheromone(possible_move);
 		int toCheck = -1;
-		if (max_pheromone.first == 0) //random
+		if (max_pheromone.first < 1) //random
 				{
 			std::random_device dev;
 			std::mt19937 rng(dev());
 			std::uniform_int_distribution<std::mt19937::result_type> dist(0,
 					POSSIBLE_DIRECTION - 1);
-			cerr << "ENTRO NEL PRIMO IF" << endl;
 			while (toCheck == -1) {
 				int index = dist(rng);
 				if (possible_move[index] > -1)
-					toCheck = dist(rng);
+					toCheck = index;
 			}
 		} else
 			toCheck = max_pheromone.second;
@@ -253,6 +248,7 @@ public:
 		case 7:
 			return DOWN_RIGHT;
 		default:
+			cerr << "SEND NEW DIRECTION" << endl;
 			return BORN;
 		}
 	}
@@ -262,13 +258,14 @@ public:
 			if (foods[a] == pos) {
 				foods_quantity[a]--;
 				total_food--;
-				if (foods_quantity[a] == 0) {
+				if (foods_quantity[a] <= 0) {
 					foods.erase(foods.begin() + a);
 					foods_quantity.erase(foods_quantity.begin() + a);
 					pair<int, int> p = intToPair(pos);
 					int x = p.first;
 					int y = p.second;
 					cells[x][y].food = false;
+					break;
 				}
 			}
 	}
@@ -295,7 +292,7 @@ public:
 				l = up_left(cP);
 			if (d == UP_RIGHT)
 				l = up_right(cP);
-			if (l != -1) {
+			if (l > 0 || l < max_num) {
 				pair<int, int> p = intToPair(l);
 				int x = p.first;
 				int y = p.second;
@@ -303,25 +300,25 @@ public:
 				val--;
 				cP = l;
 			} else
-				break;
+				count = 0;
 			count--;
 		}
 	}
 
-	void propagate_pheromone(int a, Ant &ant) {
-		pair<int, int> p = intToPair(a);
+	void propagate_pheromone(Ant *ant) {
+		pair<int, int> p = intToPair(ant->getCurrentPosition());
 		int x = p.first;
 		int y = p.second;
-		cells[x][y].pheromone = ant.getToIncreasePheromon();
-		propagate(a, 2, ant.getToIncreasePheromon() - 1, LEFT);
-		propagate(a, 2, ant.getToIncreasePheromon() - 1, RIGHT);
-		propagate(a, 2, ant.getToIncreasePheromon() - 1, UP);
-		propagate(a, 2, ant.getToIncreasePheromon() - 1, DOWN);
-		propagate(a, 2, ant.getToIncreasePheromon() - 1, DOWN_LEFT);
-		propagate(a, 2, ant.getToIncreasePheromon() - 1, DOWN_RIGHT);
-		propagate(a, 2, ant.getToIncreasePheromon() - 1, UP_RIGHT);
-		propagate(a, 2, ant.getToIncreasePheromon() - 1, UP_LEFT);
-		ant.setToIncreasePheromon(ant.getToIncreasePheromon() - 1);
+//		cells[x][y].pheromone =+ ant->getToIncreasePheromon();
+//		propagate(a, 2, ant.getToIncreasePheromon() - 1, LEFT);
+//		propagate(a, 2, ant.getToIncreasePheromon() - 1, RIGHT);
+//		propagate(a, 2, ant.getToIncreasePheromon() - 1, UP);
+//		propagate(a, 2, ant.getToIncreasePheromon() - 1, DOWN);
+//		propagate(a, 2, ant.getToIncreasePheromon() - 1, DOWN_LEFT);
+//		propagate(a, 2, ant.getToIncreasePheromon() - 1, DOWN_RIGHT);
+//		propagate(a, 2, ant.getToIncreasePheromon() - 1, UP_RIGHT);
+//		propagate(a, 2, ant.getToIncreasePheromon() - 1, UP_LEFT);
+		ant->decreaseToIncreasePheromon();
 	}
 
 	void update() {
@@ -329,38 +326,47 @@ public:
 			for (int b = 0; b < dim; b++)
 				if (cells[a][b].pheromone > 0)
 					cells[a][b].pheromone -= 1; //every turn decrease pheromone in cells
-		for (int f = 0; f < ants.size(); f++) {
-			{
-				if (ants[f].isFood()) {
-					propagate_pheromone(ants[f].getCurrentPosition(), ants[f]);
-					Direction come_to_souce = ants[f].getPath().back();
+		int f = 0;
+		while (f < ants.size()) {
+			if (ants[f].isFood()) {
+				propagate_pheromone(&ants[f]);
+				Direction come_to_souce = ants[f].getLastDirection();
+				int newPositon = ant_new_location(ants[f].getCurrentPosition(),
+						come_to_souce);
+				if (newPositon == -1)
+					cerr << "FORMICA NUMERO F:" << f << " in pos ----> "
+							<< ants[f].getCurrentPosition()
+							<< " CE NU CASIN CE NU CASIN CE NU CASIN CE NU CASIN "
+							<< endl;
+				else {
 					ants[f].remove_move();
-					int newPositon = ant_new_location(
-							ants[f].getCurrentPosition(), come_to_souce);
 					ants[f].setCurrentPosition(newPositon);
 					pair<int, int> p = intToPair(newPositon);
 					int x = p.first;
 					int y = p.second;
-					cerr<<"CHECKING PTOBALE HERE"<<endl;
-					if (cells[x][y].source)
+					if (cells[x][y].source) {
 						ants.erase(ants.begin() + f);
-					f--;
-				} else {
-					Direction d = getDirectionAnt(ants[f].getCurrentPosition());
-					ants[f].addMove(d);
-					int newPositon = ant_new_location(
-							ants[f].getCurrentPosition(), d);
-					ants[f].setCurrentPosition(newPositon);
-					pair<int, int> p = intToPair(newPositon);
-					int x = p.first;
-					int y = p.second;
-					if (cells[x][y].food)
-						ants[f].setFood(true);
-					cerr<<"TROVAVTO IL CIBO"<<endl;
-
-					decrease_food(newPositon);
+						cout << "FORMICA NUMERO " << f << "  cancellata"
+								<< endl;
+						f--;
+					}
 				}
+			} else {
+				Direction d = getDirectionAnt(ants[f].getCurrentPosition());
+				ants[f].addMove(d);
+				int newPositon = ant_new_location(ants[f].getCurrentPosition(),
+						d);
+				if (newPositon < 0)
+					cerr << "WRONG WRONG WRONG" << endl;
+				ants[f].setCurrentPosition(newPositon);
+				pair<int, int> p = intToPair(newPositon);
+				int x = p.first;
+				int y = p.second;
+				if (cells[x][y].food)
+					ants[f].setFood(true);
+				decrease_food(newPositon);
 			}
+			f++;
 		}
 	}
 
@@ -382,8 +388,10 @@ public:
 			return up_left(pos);
 		case DOWN_LEFT:
 			return down_left(pos);
+		default:
+			cerr << "ERRORE IN NEW LOCATION" << endl;
+			return -1;
 		}
-		return 0;
 	}
 
 	void printLocations() {
@@ -412,6 +420,14 @@ public:
 			}
 			cout << "|" << endl;
 		}
+	}
+
+	const vector<Ant>& getAnts() const {
+		return ants;
+	}
+
+	int getTotalFood() const {
+		return total_food;
 	}
 };
 
