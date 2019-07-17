@@ -15,15 +15,19 @@ private:
 	int mySource;
 	int toIncreasePheromon;
 	int currentPosition;
+	int x;
+	int y;
 	int pass_to_find = 0;
 	int pass_to_come_back = 0;
 	vector<Direction> path;
 public:
-	Ant(int pos, int toI) {
+	Ant(int pos, int toI,int x, int y) {
 		toIncreasePheromon = toI;
 		food = false;
 		currentPosition = pos;
 		mySource = pos;
+		this->x=x;
+		this->y=y;
 	}
 
 
@@ -83,8 +87,10 @@ public:
 		return currentPosition;
 	}
 
-	void setCurrentPosition(int currentPosition) {
+	void setCurrentPosition(int currentPosition,int x, int y) {
 		this->currentPosition = currentPosition;
+		this->x=x;
+		this->y=y;
 	}
 
 	void setPath(const vector<Direction> &path) {
@@ -138,6 +144,14 @@ public:
 
 	void setPassToFind(int passToFind = 0) {
 		pass_to_find = passToFind;
+	}
+
+	int getX() const {
+		return x;
+	}
+
+	int getY() const {
+		return y;
 	}
 };
 

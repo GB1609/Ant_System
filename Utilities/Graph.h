@@ -17,7 +17,7 @@ enum Direction {
 };
 #include "Ant.h"
 
-const int BEGIN_FOOD = 1000;
+const int BEGIN_FOOD = 5000;
 const int POSSIBLE_DIRECTION = 8;
 
 struct Cell {
@@ -178,8 +178,10 @@ public:
 	}
 
 	void generate_ants() {
-		for (int a = 0; a < sources.size(); a++)
-			ants.push_back(Ant(sources[a], max_num));
+		for (int a = 0; a < sources.size(); a++) {
+			pair<int, int> p = intToPair(sources[a]);
+			ants.push_back(Ant(sources[a], max_num, p.first, p.second));
+		}
 	}
 
 	int getPheromoneCell(int a) {
@@ -267,7 +269,7 @@ public:
 				break;
 			} else if (getPheromoneCell(possible_move[d])
 					<= ant->getToIncreasePheromon()
-					&& getPheromoneCell(possible_move[d]) >max
+					&& getPheromoneCell(possible_move[d]) > max
 					&& getPheromoneCell(possible_move[d]) > 0) {
 				toCheck = d;
 				max = possible_move[d];
@@ -353,7 +355,7 @@ public:
 		int y = p.second;
 		int toIncreasePheromon = ant->getToIncreasePheromon();
 		if (cells[x][y].pheromone < toIncreasePheromon)
-		cells[x][y].pheromone = toIncreasePheromon;
+			cells[x][y].pheromone = toIncreasePheromon;
 //		else {
 //			cells[x][y].pheromone = toIncreasePheromon;
 //			int expand = 0;
@@ -395,10 +397,10 @@ public:
 							come_to_souce);
 					ants[f].remove_move();
 				}
-				ants[f].setCurrentPosition(newPosition);
 				pair<int, int> p = intToPair(newPosition);
 				int x = p.first;
 				int y = p.second;
+				ants[f].setCurrentPosition(newPosition, x, y);
 				ants[f].update_pass_to_come_back();
 				if (cells[x][y].source) {
 					cells[x][y].pheromone = 1;
@@ -417,10 +419,10 @@ public:
 						d);
 				if (newPositon < 0)
 					cerr << "WRONG WRONG WRONG" << endl;
-				ants[f].setCurrentPosition(newPositon);
 				pair<int, int> p = intToPair(newPositon);
 				int x = p.first;
 				int y = p.second;
+				ants[f].setCurrentPosition(newPositon, x, y);
 				ants[f].update_pass_to_find();
 				if (cells[x][y].food) {
 					ants[f].setFood(true);
@@ -491,6 +493,10 @@ public:
 
 	int getTotalFood() const {
 		return total_food;
+	}
+
+	Cell getCells(int x, int y) const {
+		return cells[x][y];
 	}
 }
 ;
