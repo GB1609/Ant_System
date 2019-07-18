@@ -12,7 +12,6 @@ pkg_search_module(ALLEGRO5_PRIMITIVES REQUIRED allegro_primitives-5 allegro_prim
 
 file(GLOB SRC
     "include/*.h"
-    "Utilities/*.h"
     "*.cpp"
     "*.c"
     "*.h"

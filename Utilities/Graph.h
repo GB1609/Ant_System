@@ -12,12 +12,13 @@
 using namespace std;
 #include <vector>
 #include <math.h>
+#include <iterator>
 enum Direction {
 	UP, DOWN, LEFT, RIGHT, UP_LEFT, UP_RIGHT, DOWN_LEFT, DOWN_RIGHT, BORN
 };
 #include "Ant.h"
 
-const int BEGIN_FOOD = 5000;
+const int BEGIN_FOOD = 2000;
 const int POSSIBLE_DIRECTION = 8;
 
 struct Cell {
@@ -28,11 +29,6 @@ struct Cell {
 		pheromone = 0;
 		food = false;
 		source = false;
-	}
-	void print() {
-		cout << "PHEROMONE--->" << pheromone << endl;
-		cout << "SOURCE--->" << source << endl;
-		cout << "FOOD--->" << food << endl;
 	}
 };
 
@@ -79,6 +75,14 @@ public:
 		int y = num % dim;
 		p = make_pair(x, y);
 		return p;
+	}
+
+	int euclidianDistance(int a, int b) {
+		pair<int, int> p1 = intToPair(a);
+		pair<int, int> p2 = intToPair(b);
+		return sqrt(
+				(p1.first - p2.first) * (p1.first - p2.first)
+						+ (p1.second - p2.second) * (p1.second - p2.second));
 	}
 
 	int left(int n) {
@@ -233,7 +237,6 @@ public:
 			}
 		} else
 			toCheck = max_pheromone.second;
-//		cerr << "DIREZIONE GENERATA" << toCheck << endl;
 		switch (toCheck) {
 		case 0:
 			return LEFT;
@@ -308,16 +311,23 @@ public:
 					int x = p.first;
 					int y = p.second;
 					cells[x][y].food = false;
+					for (int f = 0; f < ants.size(); f++)
+						ants[f].setFood(false);
+					cout << endl << endl << "MATRICE ALLA FINE" << endl;
+					printMatrix();
+					cout << endl;
+					reset_pheromone();
 					break;
 				}
 			}
 	}
 
-	void propagate(int pos, int n, int v, Direction d) {
-		int count = n;
+	void propagate(int pos, int v, Direction d) {
 		int cP = pos;
+		bool go = true;
 		int val = v;
-		while (count > 0) {
+		while (go) {
+			int dec = v * 0.2;
 			int l;
 			if (d == RIGHT)
 				l = right(cP);
@@ -339,12 +349,14 @@ public:
 				pair<int, int> p = intToPair(l);
 				int x = p.first;
 				int y = p.second;
-				cells[x][y].pheromone += val;
-				val--;
+				if (cells[x][y].pheromone < val - dec)
+					cells[x][y].pheromone = val - dec;
+				val = val - dec;
 				cP = l;
+				if (getPheromoneCell(cP) < 1)
+					go = false;
 			} else
-				count = 0;
-			count--;
+				go = false;
 		}
 	}
 
@@ -356,31 +368,28 @@ public:
 		int toIncreasePheromon = ant->getToIncreasePheromon();
 		if (cells[x][y].pheromone < toIncreasePheromon)
 			cells[x][y].pheromone = toIncreasePheromon;
-//		else {
-//			cells[x][y].pheromone = toIncreasePheromon;
-//			int expand = 0;
-//			int c = left(a);
-//			while (getPheromoneCell(c) > 0) {
-//				expand++;
-//				c = left(c);
-//			}
-//			int dec = toIncreasePheromon * 0.2;
-//			propagate(a, expand, toIncreasePheromon - dec, LEFT);
-//			propagate(a, expand, toIncreasePheromon - dec, RIGHT);
-//			propagate(a, expand, toIncreasePheromon - dec, UP);
-//			propagate(a, expand, toIncreasePheromon - dec, DOWN);
-//			propagate(a, expand, toIncreasePheromon - dec, DOWN_LEFT);
-//			propagate(a, expand, toIncreasePheromon - dec, DOWN_RIGHT);
-//			propagate(a, expand, toIncreasePheromon - dec, UP_RIGHT);
-//			propagate(a, expand, toIncreasePheromon - dec, UP_LEFT);
-//		}
+		else {
+			propagate(a, toIncreasePheromon, LEFT);
+			propagate(a, toIncreasePheromon, RIGHT);
+			propagate(a, toIncreasePheromon, UP);
+			propagate(a, toIncreasePheromon, DOWN);
+			propagate(a, toIncreasePheromon, DOWN_LEFT);
+			propagate(a, toIncreasePheromon, DOWN_RIGHT);
+			propagate(a, toIncreasePheromon, UP_RIGHT);
+			propagate(a, toIncreasePheromon, UP_LEFT);
+		}
 		ant->decreaseToIncreasePheromon();
 	}
 	void decrease_pheromone() {
 		for (int a = 0; a < dim; a++)
 			for (int b = 0; b < dim; b++)
-				if (cells[a][b].pheromone > 1)
-					cells[a][b].pheromone -= 1; //every turn decrease pheromone in cells
+				if (cells[a][b].pheromone > 0)
+					cells[a][b].pheromone -= 1;
+	}
+	void reset_pheromone() {
+		for (int a = 0; a < dim; a++)
+			for (int b = 0; b < dim; b++)
+				cells[a][b].pheromone = 0;
 	}
 
 	void update() {
@@ -404,11 +413,6 @@ public:
 				ants[f].update_pass_to_come_back();
 				if (cells[x][y].source) {
 					cells[x][y].pheromone = 1;
-					cout << "FORMICA NUMERO " << f << "  cancellata"
-							<< " PASSI PER TROVARE CIBO-->"
-							<< ants[f].getPassToFind()
-							<< " PASSI PER TORNARE-->"
-							<< ants[f].getPassToComeBack() << endl;
 					ants.erase(ants.begin() + f);
 					f--;
 				}

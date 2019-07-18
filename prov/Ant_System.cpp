@@ -5,27 +5,16 @@
 #include <allegro5/allegro.h>
 #include <allegro5/allegro_primitives.h>
 #include "Utilities/Graph.h"
-#include <mpi/mpi.h>
 using namespace std;
 
 void update_gui(int width, Graph *g) {
-//	al_clear_to_color(al_map_rgb(102, 255, 255));
+	al_clear_to_color(al_map_rgb(102, 255, 255));
 	int maxValue = g->getDimMax();
-	int percent=maxValue*0.2;
 	for (int a = 0; a < g->getDim(); a++)
 		for (int b = 0; b < g->getDim(); b++) {
-			if (g->getCells(a, b).pheromone > percent) {
-				int vc = (g->getCells(a, b).pheromone * 255) / maxValue;
-				al_draw_filled_rectangle(((b * width) - width / 2) + 10,
-						((a * width) - width / 2) + 10,
-						((b * width) + width / 2) + 10,
-						((a * width) + width / 2) + 10, al_map_rgb(vc, 0, 0));
-			} else
-				al_draw_filled_rectangle(((b * width) - width / 2) + 10,
-						((a * width) - width / 2) + 10,
-						((b * width) + width / 2) + 10,
-						((a * width) + width / 2) + 10,
-						al_map_rgb(102, 255, 255));
+//			if (g->getCells(a, b).pheromone > 0)
+//				al_draw_filled_rectangle(((b * width)-width/2)+10, ((a * width)-width/2)+10, ((b * width)+width/2) +10, ((a * width)+width/2)+10,
+//						al_map_rgb((g->getCells(a, b).pheromone/maxValue )*255, 0, 0));
 			if (g->getCells(a, b).food)
 				al_draw_filled_circle((b * width) + 10, (a * width) + 10,
 						width / 2, al_map_rgb(0, 155, 0));
@@ -37,11 +26,11 @@ void update_gui(int width, Graph *g) {
 		if (g->getAnts()[f].isFood())
 			al_draw_filled_circle((g->getAnts()[f].getY() * width) + 10,
 					(g->getAnts()[f].getX() * width) + 10, width / 2,
-					al_map_rgb(255, 200, 15));
+					al_map_rgb(255, 15, 15));
 		else
 			al_draw_filled_circle((g->getAnts()[f].getY() * width) + 10,
 					(g->getAnts()[f].getX() * width) + 10, width / 2,
-					al_map_rgb(0, 0, 0));
+					al_map_rgb(15, 15, 15));
 	al_flip_display();
 }
 
@@ -55,16 +44,16 @@ int main(int argc, char **argv) {
 			g.getDimMax() - 1);
 	srand(time(0));
 	int randomFood1 = dist(rng);
-	int randomFood2 = dist(rng);
+//	int randomFood2 = dist(rng);
 	int randomSource1 = randomFood1;
 	while (abs(randomFood1 - randomSource1) < g.getDimMax() / 3)
 		randomSource1 = dist(rng);
 	g.intitializate_matrix();
-	randomFood1 = 5462;
-//	randomFood2 = 5462;
-	randomSource1 = 98;
+	randomFood1 = 13;
+//	randomFood2 = 87;
+	randomSource1 = 9057;
 	g.setFood(randomFood1);
-	g.setFood(randomFood2);
+//	g.setFood(randomFood2);
 	g.setSource(randomSource1);
 	g.printLocations();
 
@@ -85,15 +74,15 @@ int main(int argc, char **argv) {
 	int epoch = 0;
 	for (int a = 0; a < 7; a++)
 		g.generate_ants();
-	while (g.there_is_food()) {
+	while (g.there_is_food() || (!g.there_is_food() && !g.getAnts().empty())) {
 		cout << endl << endl << "EPOCA: " << epoch << endl;
 		cout << "FOOD REMAINS---> " << g.getTotalFood() << " ANT REMAINED---->"
 				<< g.getAnts().size() << endl << endl;
 		if (epoch % 10 == 0)
 			g.generate_ants();
-		if (epoch % (int) (dimension * 0.02) == 0)
-			g.decrease_pheromone();
-		if (epoch % 1000 == 0)
+//		if (epoch % 100 == 0)
+//			g.decrease_pheromone();
+		if (epoch % 100 == 0)
 			g.printMatrix();
 		update_gui(width, &g);
 		g.update();
