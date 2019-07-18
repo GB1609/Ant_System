@@ -262,24 +262,38 @@ public:
 
 	int come_back_with_food(Ant *ant) {
 		int a = ant->getCurrentPosition();
-		int possible_move[] = { left(a), right(a), up(a), down(a), up_left(a),
-				up_right(a), down_left(a), down_right(a) };
-		int toCheck = -1;
-		int max = max_num;
-		for (int d = 0; d < POSSIBLE_DIRECTION; d++)
-			if (possible_move[d] == ant->getMySource()) {
-				toCheck = d;
-				break;
-			} else if (getPheromoneCell(possible_move[d])
-					<= ant->getToIncreasePheromon()
-					&& getPheromoneCell(possible_move[d]) > max
-					&& getPheromoneCell(possible_move[d]) > 0) {
-				toCheck = d;
-				max = getPheromoneCell(possible_move[d]);
-			}
-		if (toCheck == -1)
-			return -1;
-		return possible_move[toCheck];
+//		if (!ant->isFirst()) {
+//			int possible_move[] = { left(a), right(a), up(a), down(a), up_left(
+//					a), up_right(a), down_left(a), down_right(a) };
+//			int toCheck = -1;
+//			int max = -1;
+//			for (int d = 0; d < POSSIBLE_DIRECTION; d++) {
+//				int valutate = possible_move[d];
+//				if (valutate == ant->getMySource())
+//					return valutate;
+//				else if (getPheromoneCell(valutate) < getPheromoneCell(a)
+//						&& getPheromoneCell(valutate) > max
+//						&& getPheromoneCell(valutate) > 0) {
+//					toCheck = valutate;
+//					max = getPheromoneCell(valutate);
+//				}
+//			}
+//			if (toCheck == -1) {
+//				cerr << "POSSIBLE MOVE" << endl;
+//				for (int g = 0; g < 8; g++) {
+//					cerr << possible_move[g] << endl;
+//					cerr <<"PHE _____> "<< getPheromoneCell(possible_move[g]) << endl;
+//					cerr <<"PHE my ___> "<< getPheromoneCell(a) << endl;
+//				}
+//			}
+//			return toCheck;
+//		} else {
+			Direction come_to_souce = ant->getLastDirection();
+			int newPosition = ant_new_location(ant->getCurrentPosition(),
+					come_to_souce);
+			ant->remove_move();
+			return newPosition;
+//		}
 	}
 
 	void decrease_food(int pos) {
@@ -294,8 +308,11 @@ public:
 					int x = p.first;
 					int y = p.second;
 					cells[x][y].food = false;
-					for (int f = 0; f < ants.size(); f++)
+					for (int f = 0; f < ants.size(); f++) {
 						ants[f].setFood(false);
+						ants[f].setFirst(false);
+						ants[f].setToIncreasePheromon(max_num);
+					}
 					cout << endl << endl << "MATRICE ALLA FINE" << endl;
 					printMatrix();
 					cout << endl;
@@ -349,6 +366,7 @@ public:
 		int x = p.first;
 		int y = p.second;
 		int toIncreasePheromon = ant->getToIncreasePheromon();
+
 		if (cells[x][y].pheromone < toIncreasePheromon) {
 			cells[x][y].pheromone = toIncreasePheromon;
 			propagate(a, toIncreasePheromon, LEFT);
@@ -375,17 +393,13 @@ public:
 	}
 
 	void update() {
-		vector<Ant>::iterator f=ants.begin();
-		while (f !=ants.end()) {
+		vector<Ant>::iterator f = ants.begin();
+		while (f != ants.end()) {
 			if (f->isFood()) {
 				propagate_pheromone(&*f);
 				int newPosition = come_back_with_food(&*f);
-				if (getPheromoneCell(newPosition) == -1 || newPosition == -1) {
-					Direction come_to_souce = f->getLastDirection();
-					newPosition = ant_new_location(f->getCurrentPosition(),
-							come_to_souce);
-					f->remove_move();
-				}
+				if (newPosition < 0)
+					cerr << "ERrOR come back" << endl;
 				pair<int, int> p = intToPair(newPosition);
 				int x = p.first;
 				int y = p.second;
@@ -393,14 +407,13 @@ public:
 				f->update_pass_to_come_back();
 				if (cells[x][y].source) {
 					cells[x][y].pheromone = 1;
-					f=ants.erase(f);
+					f = ants.erase(f);
 					f--;
 				}
 			} else {
 				Direction d = find_direction_without_food(&*f);
 				f->addMove(d);
-				int newPositon = ant_new_location(f->getCurrentPosition(),
-						d);
+				int newPositon = ant_new_location(f->getCurrentPosition(), d);
 				if (newPositon < 0)
 					cerr << "WRONG WRONG WRONG" << endl;
 				pair<int, int> p = intToPair(newPositon);
@@ -409,6 +422,8 @@ public:
 				f->setCurrentPosition(newPositon, x, y);
 				f->update_pass_to_find();
 				if (cells[x][y].food) {
+					if (cells[x][y].pheromone == 0)
+						f->setFirst(true);
 					f->setFood(true);
 					decrease_food(newPositon);
 				}

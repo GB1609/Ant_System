@@ -12,6 +12,7 @@ class Ant {
 
 private:
 	bool food;
+	bool first;
 	int mySource;
 	int toIncreasePheromon;
 	int currentPosition;
@@ -28,6 +29,7 @@ public:
 		mySource = pos;
 		this->x=x;
 		this->y=y;
+		first=false;
 	}
 
 
@@ -152,6 +154,14 @@ public:
 
 	int getY() const {
 		return y;
+	}
+
+	bool isFirst() const {
+		return first;
+	}
+
+	void setFirst(bool first) {
+		this->first = first;
 	}
 };
 

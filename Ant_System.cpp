@@ -45,8 +45,8 @@ void update_gui(int width, Graph *g) {
 }
 
 int main(int argc, char **argv) {
-	int dimension = 100;
-	int width = 9;
+	int dimension = 20;
+	int width = 40;
 	Graph g(dimension);
 	std::random_device dev;
 	std::mt19937 rng(dev());
@@ -59,7 +59,7 @@ int main(int argc, char **argv) {
 	while (abs(randomFood1 - randomSource1) < g.getDimMax() / 3)
 		randomSource1 = dist(rng);
 	g.intitializate_matrix();
-	randomFood1 = 5462;
+	randomFood1 = 376;
 //	randomFood2 = 5462;
 	randomSource1 = 98;
 	g.setFood(randomFood1);
