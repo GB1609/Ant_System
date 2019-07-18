@@ -228,8 +228,8 @@ public:
 				{
 			std::random_device dev;
 			std::mt19937 rng(dev());
-			std::uniform_int_distribution<std::mt19937::result_type> dist(0,
-					POSSIBLE_DIRECTION - 1);
+			std::uniform_int_distribution < std::mt19937::result_type
+					> dist(0, POSSIBLE_DIRECTION - 1);
 			while (toCheck == -1) {
 				int index = dist(rng);
 				if (possible_move[index] > -1)
@@ -260,7 +260,7 @@ public:
 		}
 	}
 
-	Direction come_back_with_food(Ant *ant) {
+	int come_back_with_food(Ant *ant) {
 		int a = ant->getCurrentPosition();
 		int possible_move[] = { left(a), right(a), up(a), down(a), up_left(a),
 				up_right(a), down_left(a), down_right(a) };
@@ -275,28 +275,11 @@ public:
 					&& getPheromoneCell(possible_move[d]) > max
 					&& getPheromoneCell(possible_move[d]) > 0) {
 				toCheck = d;
-				max = possible_move[d];
+				max = getPheromoneCell(possible_move[d]);
 			}
-		switch (toCheck) {
-		case 0:
-			return LEFT;
-		case 1:
-			return RIGHT;
-		case 2:
-			return UP;
-		case 3:
-			return DOWN;
-		case 4:
-			return UP_LEFT;
-		case 5:
-			return UP_RIGHT;
-		case 6:
-			return DOWN_LEFT;
-		case 7:
-			return DOWN_RIGHT;
-		default:
-			return BORN;
-		}
+		if (toCheck == -1)
+			return -1;
+		return possible_move[toCheck];
 	}
 
 	void decrease_food(int pos) {
@@ -366,9 +349,8 @@ public:
 		int x = p.first;
 		int y = p.second;
 		int toIncreasePheromon = ant->getToIncreasePheromon();
-		if (cells[x][y].pheromone < toIncreasePheromon)
+		if (cells[x][y].pheromone < toIncreasePheromon) {
 			cells[x][y].pheromone = toIncreasePheromon;
-		else {
 			propagate(a, toIncreasePheromon, LEFT);
 			propagate(a, toIncreasePheromon, RIGHT);
 			propagate(a, toIncreasePheromon, UP);
@@ -393,43 +375,41 @@ public:
 	}
 
 	void update() {
-		int f = 0;
-		while (f < ants.size()) {
-			if (ants[f].isFood()) {
-				propagate_pheromone(&ants[f]);
-				int newPosition;
-				Direction d = come_back_with_food(&ants[f]);
-				newPosition = ant_new_location(ants[f].getCurrentPosition(), d);
-				if (getPheromoneCell(newPosition) == -1) {
-					Direction come_to_souce = ants[f].getLastDirection();
-					newPosition = ant_new_location(ants[f].getCurrentPosition(),
+		vector<Ant>::iterator f=ants.begin();
+		while (f !=ants.end()) {
+			if (f->isFood()) {
+				propagate_pheromone(&*f);
+				int newPosition = come_back_with_food(&*f);
+				if (getPheromoneCell(newPosition) == -1 || newPosition == -1) {
+					Direction come_to_souce = f->getLastDirection();
+					newPosition = ant_new_location(f->getCurrentPosition(),
 							come_to_souce);
-					ants[f].remove_move();
+					f->remove_move();
 				}
 				pair<int, int> p = intToPair(newPosition);
 				int x = p.first;
 				int y = p.second;
-				ants[f].setCurrentPosition(newPosition, x, y);
-				ants[f].update_pass_to_come_back();
+				f->setCurrentPosition(newPosition, x, y);
+				f->update_pass_to_come_back();
 				if (cells[x][y].source) {
 					cells[x][y].pheromone = 1;
-					ants.erase(ants.begin() + f);
+					f=ants.erase(f);
 					f--;
 				}
 			} else {
-				Direction d = find_direction_without_food(&ants[f]);
-				ants[f].addMove(d);
-				int newPositon = ant_new_location(ants[f].getCurrentPosition(),
+				Direction d = find_direction_without_food(&*f);
+				f->addMove(d);
+				int newPositon = ant_new_location(f->getCurrentPosition(),
 						d);
 				if (newPositon < 0)
 					cerr << "WRONG WRONG WRONG" << endl;
 				pair<int, int> p = intToPair(newPositon);
 				int x = p.first;
 				int y = p.second;
-				ants[f].setCurrentPosition(newPositon, x, y);
-				ants[f].update_pass_to_find();
+				f->setCurrentPosition(newPositon, x, y);
+				f->update_pass_to_find();
 				if (cells[x][y].food) {
-					ants[f].setFood(true);
+					f->setFood(true);
 					decrease_food(newPositon);
 				}
 			}
