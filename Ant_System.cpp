@@ -7,6 +7,8 @@
 #include "Utilities/Graph.h"
 using namespace std;
 
+const int BEGIN_ANT=100;
+
 void update_gui(int width, Graph *g) {
 	int maxValue = g->getDimMax();
 	int limit_draw = maxValue * 0.3;
@@ -31,22 +33,22 @@ void update_gui(int width, Graph *g) {
 						al_map_rgb(51, 51, 204));
 		}
 	for (int f = 0; f < g->getAnts().size(); f++)
-		if (g->getAnts()[f].isFood())
+		if (g->getAnts()[f].food)
 			al_draw_filled_circle(
-					(g->getAnts()[f].getY() * width) + width / 2 + 10,
-					(g->getAnts()[f].getX() * width) + width / 2 + 10,
+					(g->getAnts()[f].y * width) + width / 2 + 10,
+					(g->getAnts()[f].x * width) + width / 2 + 10,
 					width / 2, al_map_rgb(255, 200, 15));
 		else
 			al_draw_filled_circle(
-					(g->getAnts()[f].getY() * width) + 10 + width / 2,
-					(g->getAnts()[f].getX() * width) + 10 + width / 2,
+					(g->getAnts()[f].y * width) + 10 + width / 2,
+					(g->getAnts()[f].x * width) + 10 + width / 2,
 					width / 2, al_map_rgb(0, 0, 0));
 	al_flip_display();
 }
 
 int main(int argc, char **argv) {
-	int dimension = 20;
-	int width = 40;
+	int dimension = 100;
+	int width = 10;
 	Graph g(dimension);
 	std::random_device dev;
 	std::mt19937 rng(dev());
@@ -59,7 +61,7 @@ int main(int argc, char **argv) {
 	while (abs(randomFood1 - randomSource1) < g.getDimMax() / 3)
 		randomSource1 = dist(rng);
 	g.intitializate_matrix();
-	randomFood1 = 376;
+	randomFood1 = 8765;
 //	randomFood2 = 5462;
 	randomSource1 = 98;
 	g.setFood(randomFood1);
@@ -82,7 +84,7 @@ int main(int argc, char **argv) {
 	update_gui(width, &g);
 
 	int epoch = 0;
-	for (int a = 0; a < 70; a++)
+	for (int a = 0; a < BEGIN_ANT; a++)
 		g.generate_ants();
 	while (g.there_is_food()) {
 		cout << endl << endl << "EPOCA: " << epoch << endl;

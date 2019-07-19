@@ -13,10 +13,27 @@ using namespace std;
 #include <vector>
 #include <math.h>
 #include <iterator>
+
+struct Ant {
+	bool food;
+	int mySource;
+	int toIncreasePheromon;
+	int currentPosition;
+	int x;
+	int y;
+	Ant(int pos, int toI, int x, int y) {
+		toIncreasePheromon = toI;
+		food = false;
+		currentPosition = pos;
+		mySource = pos;
+		this->x = x;
+		this->y = y;
+	}
+};
+
 enum Direction {
 	UP, DOWN, LEFT, RIGHT, UP_LEFT, UP_RIGHT, DOWN_LEFT, DOWN_RIGHT, BORN
 };
-#include "Ant.h"
 
 const int BEGIN_FOOD = 2000;
 const int POSSIBLE_DIRECTION = 8;
@@ -212,7 +229,7 @@ public:
 
 	Direction find_direction_without_food(Ant *ant) //guarda se ce feromone attorno e prende quello con quantita maggiore (a caso altrimenti)
 			{
-		int a = ant->getCurrentPosition();
+		int a = ant->currentPosition;
 		int l = getPheromoneCell(left(a));
 		int r = getPheromoneCell(right(a));
 		int u = getPheromoneCell(up(a));
@@ -261,39 +278,22 @@ public:
 	}
 
 	int come_back_with_food(Ant *ant) {
-		int a = ant->getCurrentPosition();
-//		if (!ant->isFirst()) {
-//			int possible_move[] = { left(a), right(a), up(a), down(a), up_left(
-//					a), up_right(a), down_left(a), down_right(a) };
-//			int toCheck = -1;
-//			int max = -1;
-//			for (int d = 0; d < POSSIBLE_DIRECTION; d++) {
-//				int valutate = possible_move[d];
-//				if (valutate == ant->getMySource())
-//					return valutate;
-//				else if (getPheromoneCell(valutate) < getPheromoneCell(a)
-//						&& getPheromoneCell(valutate) > max
-//						&& getPheromoneCell(valutate) > 0) {
-//					toCheck = valutate;
-//					max = getPheromoneCell(valutate);
-//				}
-//			}
-//			if (toCheck == -1) {
-//				cerr << "POSSIBLE MOVE" << endl;
-//				for (int g = 0; g < 8; g++) {
-//					cerr << possible_move[g] << endl;
-//					cerr <<"PHE _____> "<< getPheromoneCell(possible_move[g]) << endl;
-//					cerr <<"PHE my ___> "<< getPheromoneCell(a) << endl;
-//				}
-//			}
-//			return toCheck;
-//		} else {
-			Direction come_to_souce = ant->getLastDirection();
-			int newPosition = ant_new_location(ant->getCurrentPosition(),
-					come_to_souce);
-			ant->remove_move();
-			return newPosition;
-//		}
+		int a = ant->currentPosition;
+		int possible_move[] = { left(a), right(a), up(a), down(a), up_left(a),
+				up_right(a), down_left(a), down_right(a) };
+		int toCheck = -1;
+		int max = -1;
+		int min = INT_MAX;
+		int eD = -1;
+		for (int d = 0; d < POSSIBLE_DIRECTION; d++) {
+			int valutate = possible_move[d];
+			if (valutate > 0
+					&& euclidianDistance(valutate, ant->mySource) < min) {
+				min = euclidianDistance(valutate, ant->mySource);
+				eD = valutate;
+			}
+		}
+		return eD;
 	}
 
 	void decrease_food(int pos) {
@@ -309,9 +309,8 @@ public:
 					int y = p.second;
 					cells[x][y].food = false;
 					for (int f = 0; f < ants.size(); f++) {
-						ants[f].setFood(false);
-						ants[f].setFirst(false);
-						ants[f].setToIncreasePheromon(max_num);
+						ants[f].food = false;
+						ants[f].toIncreasePheromon = false;
 					}
 					cout << endl << endl << "MATRICE ALLA FINE" << endl;
 					printMatrix();
@@ -361,11 +360,11 @@ public:
 	}
 
 	void propagate_pheromone(Ant *ant) {
-		int a = ant->getCurrentPosition();
+		int a = ant->currentPosition;
 		pair<int, int> p = intToPair(a);
 		int x = p.first;
 		int y = p.second;
-		int toIncreasePheromon = ant->getToIncreasePheromon();
+		int toIncreasePheromon = ant->toIncreasePheromon;
 
 		if (cells[x][y].pheromone < toIncreasePheromon) {
 			cells[x][y].pheromone = toIncreasePheromon;
@@ -378,7 +377,8 @@ public:
 			propagate(a, toIncreasePheromon, UP_RIGHT);
 			propagate(a, toIncreasePheromon, UP_LEFT);
 		}
-		ant->decreaseToIncreasePheromon();
+		if (ant->toIncreasePheromon > 1)
+			ant->toIncreasePheromon--;
 	}
 	void decrease_pheromone() {
 		for (int a = 0; a < dim; a++)
@@ -395,7 +395,7 @@ public:
 	void update() {
 		vector<Ant>::iterator f = ants.begin();
 		while (f != ants.end()) {
-			if (f->isFood()) {
+			if (f->food) {
 				propagate_pheromone(&*f);
 				int newPosition = come_back_with_food(&*f);
 				if (newPosition < 0)
@@ -403,8 +403,9 @@ public:
 				pair<int, int> p = intToPair(newPosition);
 				int x = p.first;
 				int y = p.second;
-				f->setCurrentPosition(newPosition, x, y);
-				f->update_pass_to_come_back();
+				f->currentPosition=newPosition;
+				f->x=x;
+				f->y=y;
 				if (cells[x][y].source) {
 					cells[x][y].pheromone = 1;
 					f = ants.erase(f);
@@ -412,19 +413,17 @@ public:
 				}
 			} else {
 				Direction d = find_direction_without_food(&*f);
-				f->addMove(d);
-				int newPositon = ant_new_location(f->getCurrentPosition(), d);
+				int newPositon = ant_new_location(f->currentPosition, d);
 				if (newPositon < 0)
 					cerr << "WRONG WRONG WRONG" << endl;
 				pair<int, int> p = intToPair(newPositon);
 				int x = p.first;
 				int y = p.second;
-				f->setCurrentPosition(newPositon, x, y);
-				f->update_pass_to_find();
+				f->currentPosition=newPositon;
+								f->x=x;
+								f->y=y;
 				if (cells[x][y].food) {
-					if (cells[x][y].pheromone == 0)
-						f->setFirst(true);
-					f->setFood(true);
+					f->food=true;
 					decrease_food(newPositon);
 				}
 			}
