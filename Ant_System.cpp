@@ -7,11 +7,11 @@
 #include "Utilities/Graph.h"
 using namespace std;
 
-const int BEGIN_ANT=100;
+const int BEGIN_ANT=20;
 
 void update_gui(int width, Graph *g) {
 	int maxValue = g->getDimMax();
-	int limit_draw = maxValue * 0.3;
+	int limit_draw = maxValue * 0.2;
 	for (int a = 0; a < g->getDim(); a++)
 		for (int b = 0; b < g->getDim(); b++) {
 			if (g->getCells(a, b).pheromone > limit_draw) {
@@ -61,7 +61,7 @@ int main(int argc, char **argv) {
 	while (abs(randomFood1 - randomSource1) < g.getDimMax() / 3)
 		randomSource1 = dist(rng);
 	g.intitializate_matrix();
-	randomFood1 = 8765;
+	randomFood1 = 9756;
 //	randomFood2 = 5462;
 	randomSource1 = 98;
 	g.setFood(randomFood1);
@@ -80,8 +80,6 @@ int main(int argc, char **argv) {
 		fprintf(stderr, "failed to create display!\n");
 		return -1;
 	}
-
-	update_gui(width, &g);
 
 	int epoch = 0;
 	for (int a = 0; a < BEGIN_ANT; a++)

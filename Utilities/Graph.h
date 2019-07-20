@@ -37,6 +37,7 @@ enum Direction {
 
 const int BEGIN_FOOD = 2000;
 const int POSSIBLE_DIRECTION = 8;
+const int AROUND = 3;
 
 struct Cell {
 	int pheromone;
@@ -59,6 +60,7 @@ private:
 	vector<int> sources;
 	vector<int> foods;
 	vector<int> foods_quantity;
+	int epoch;
 
 public:
 	Graph(int w) {
@@ -68,6 +70,7 @@ public:
 		cells = (Cell**) malloc(dim * sizeof(Cell*));
 		for (int i = 0; i < dim; i++)
 			cells[i] = (Cell*) malloc(dim * sizeof(Cell));
+		epoch = 1;
 	}
 
 	bool there_is_food() {
@@ -199,10 +202,11 @@ public:
 	}
 
 	void generate_ants() {
-		for (int a = 0; a < sources.size(); a++) {
-			pair<int, int> p = intToPair(sources[a]);
-			ants.push_back(Ant(sources[a], max_num, p.first, p.second));
-		}
+		if (ants.size() < 200)
+			for (int a = 0; a < sources.size(); a++) {
+				pair<int, int> p = intToPair(sources[a]);
+				ants.push_back(Ant(sources[a], max_num, p.first, p.second));
+			}
 	}
 
 	int getPheromoneCell(int a) {
@@ -227,20 +231,96 @@ public:
 		return p;
 	}
 
-	Direction find_direction_without_food(Ant *ant) //guarda se ce feromone attorno e prende quello con quantita maggiore (a caso altrimenti)
+	int search_pheromone(int pos) {
+		int min = INT_MAX;
+
+		int r = pos;
+		int count = -1;
+		int toReturn = -1;
+		while (left(r) >= 0) {
+			count++;
+			if (getPheromoneCell(left(r)) > 0) {
+				if (count < min) {
+					min = count;
+					toReturn = left(r);
+				}
+				break;
+			}
+			r = left(r);
+		}
+
+		r = pos;
+		count = -1;
+		while (right(r) >= 0) {
+			count++;
+			if (getPheromoneCell(right(r)) > 0) {
+				if (count < min) {
+					min = count;
+					toReturn = right(r);
+				}
+				break;
+			}
+			r = right(r);
+		}
+
+		r = pos;
+		count = -1;
+		while (up(r) >= 0) {
+			count++;
+			if (getPheromoneCell(up(r)) > 0) {
+				if (count < min) {
+					min = count;
+					toReturn = up(r);
+				}
+				break;
+			}
+			r = up(r);
+		}
+
+		r = pos;
+		count = -1;
+		while (down(r) >= 0) {
+			count++;
+			if (getPheromoneCell(down(r)) > 0) {
+				if (count < min) {
+					min = count;
+					toReturn = down(r);
+				}
+				break;
+			}
+			r = down(r);
+		}
+
+		return toReturn;
+	}
+
+	int find_direction_without_food(Ant *ant) //guarda se ce feromone attorno e prende quello con quantita maggiore (a caso altrimenti)
 			{
 		int a = ant->currentPosition;
-		int l = getPheromoneCell(left(a));
-		int r = getPheromoneCell(right(a));
-		int u = getPheromoneCell(up(a));
-		int d = getPheromoneCell(down(a));
-		int ul = getPheromoneCell(up_left(a));
-		int ur = getPheromoneCell(up_right(a));
-		int dl = getPheromoneCell(down_left(a));
-		int dr = getPheromoneCell(down_right(a));
+		if (epoch % 500 == 0) {
+			int sp = search_pheromone(a);
+			if (sp > 0)
+				return sp;
+		}
+		int toCheck = -1;
+		int left_pos = left(a);
+		int l = getPheromoneCell(left_pos);
+		int right_pos = right(a);
+		int r = getPheromoneCell(right_pos);
+		int up_pos = up(a);
+		int u = getPheromoneCell(up_pos);
+		int down_pos = down(a);
+		int d = getPheromoneCell(down_pos);
+		int upLeft_pos = up_left(a);
+		int ul = getPheromoneCell(upLeft_pos);
+		int upRight_pos = up_right(a);
+		int ur = getPheromoneCell(upRight_pos);
+		int downLeft_pos = down_left(a);
+		int dl = getPheromoneCell(downLeft_pos);
+		int downRight_pos = down_right(a);
+		int dr = getPheromoneCell(downRight_pos);
 		vector<int> possible_move { l, r, u, d, ul, ur, dl, dr };
 		pair<int, int> max_pheromone = max_value_pheromone(possible_move);
-		int toCheck = -1;
 		if (max_pheromone.first < 1) //random
 				{
 			std::random_device dev;
@@ -256,24 +336,24 @@ public:
 			toCheck = max_pheromone.second;
 		switch (toCheck) {
 		case 0:
-			return LEFT;
+			return left_pos;
 		case 1:
-			return RIGHT;
+			return right_pos;
 		case 2:
-			return UP;
+			return up_pos;
 		case 3:
-			return DOWN;
+			return down_pos;
 		case 4:
-			return UP_LEFT;
+			return upLeft_pos;
 		case 5:
-			return UP_RIGHT;
+			return upRight_pos;
 		case 6:
-			return DOWN_LEFT;
+			return downLeft_pos;
 		case 7:
-			return DOWN_RIGHT;
+			return downRight_pos;
 		default:
 			cerr << "SEND NEW DIRECTION" << endl;
-			return BORN;
+			return -1;
 		}
 	}
 
@@ -323,11 +403,12 @@ public:
 
 	void propagate(int pos, int v, Direction d) {
 		int cP = pos;
+		int dec;
+		int l;
 		bool go = true;
 		int val = v;
 		while (go) {
-			int dec = v * 0.2;
-			int l;
+			dec = val * 0.1;
 			if (d == RIGHT)
 				l = right(cP);
 			if (d == LEFT)
@@ -344,30 +425,61 @@ public:
 				l = up_left(cP);
 			if (d == UP_RIGHT)
 				l = up_right(cP);
-			if (l > 0 || l < max_num) {
-				pair<int, int> p = intToPair(l);
-				int x = p.first;
-				int y = p.second;
-				if (cells[x][y].pheromone < val - dec)
-					cells[x][y].pheromone = val - dec;
+			if (l > -1) {
 				val = val - dec;
 				cP = l;
-				if (getPheromoneCell(cP) < 1)
+				pair<int, int> p = intToPair(cP);
+				int x = p.first;
+				int y = p.second;
+				if (cells[x][y].pheromone == 0) {
+					cells[x][y].pheromone = val;
 					go = false;
+				} else if (cells[x][y].pheromone < val)
+					cells[x][y].pheromone = val;
 			} else
 				go = false;
 		}
 	}
 
+	int count_ant_around(int pos, int posOriginal, int num) {
+		if (pos < 0)
+			return 0;
+		int cont = 0;
+		num--;
+		for (int a = 0; a < ants.size(); a++)
+			if (ants[a].food && ants[a].currentPosition != posOriginal
+					&& (ants[a].currentPosition == left(pos)
+							|| ants[a].currentPosition == right(pos)
+							|| ants[a].currentPosition == down(pos)
+							|| up(pos) == ants[a].currentPosition
+							|| up_right(pos) == ants[a].currentPosition
+							|| up_left(pos) == ants[a].currentPosition
+							|| down_left(pos) == ants[a].currentPosition
+							|| down_right(pos) == ants[a].currentPosition)) {
+				cont++;
+			}
+		if (num > 0) {
+			cont += count_ant_around(left(pos), posOriginal, num);
+			cont += count_ant_around(right(pos), posOriginal, num);
+			cont += count_ant_around(up(pos), posOriginal, num);
+			cont += count_ant_around(down(pos), posOriginal, num);
+		}
+		return cont;
+	}
+
 	void propagate_pheromone(Ant *ant) {
+
 		int a = ant->currentPosition;
 		pair<int, int> p = intToPair(a);
 		int x = p.first;
 		int y = p.second;
 		int toIncreasePheromon = ant->toIncreasePheromon;
+		int ant_around = count_ant_around(a, a, AROUND + 1) + 1;
 
-		if (cells[x][y].pheromone < toIncreasePheromon) {
+		if (cells[x][y].pheromone < toIncreasePheromon)
 			cells[x][y].pheromone = toIncreasePheromon;
+
+		while (ant_around > 0) {
 			propagate(a, toIncreasePheromon, LEFT);
 			propagate(a, toIncreasePheromon, RIGHT);
 			propagate(a, toIncreasePheromon, UP);
@@ -376,7 +488,9 @@ public:
 			propagate(a, toIncreasePheromon, DOWN_RIGHT);
 			propagate(a, toIncreasePheromon, UP_RIGHT);
 			propagate(a, toIncreasePheromon, UP_LEFT);
+			ant_around--;
 		}
+
 		if (ant->toIncreasePheromon > 1)
 			ant->toIncreasePheromon--;
 	}
@@ -403,58 +517,32 @@ public:
 				pair<int, int> p = intToPair(newPosition);
 				int x = p.first;
 				int y = p.second;
-				f->currentPosition=newPosition;
-				f->x=x;
-				f->y=y;
+				f->currentPosition = newPosition;
+				f->x = x;
+				f->y = y;
 				if (cells[x][y].source) {
 					cells[x][y].pheromone = 1;
 					f = ants.erase(f);
 					f--;
 				}
 			} else {
-				Direction d = find_direction_without_food(&*f);
-				int newPositon = ant_new_location(f->currentPosition, d);
+				int newPositon = find_direction_without_food(&*f);
 				if (newPositon < 0)
 					cerr << "WRONG WRONG WRONG" << endl;
 				pair<int, int> p = intToPair(newPositon);
 				int x = p.first;
 				int y = p.second;
-				f->currentPosition=newPositon;
-								f->x=x;
-								f->y=y;
+				f->currentPosition = newPositon;
+				f->x = x;
+				f->y = y;
 				if (cells[x][y].food) {
-					f->food=true;
+					f->food = true;
 					decrease_food(newPositon);
 				}
 			}
 			f++;
 		}
-	}
-
-	int ant_new_location(int pos, Direction d) {
-		switch (d) {
-		case LEFT:
-			return left(pos);
-		case RIGHT:
-			return right(pos);
-		case DOWN:
-			return down(pos);
-		case UP:
-			return up(pos);
-		case DOWN_RIGHT:
-			return down_right(pos);
-		case UP_RIGHT:
-			return up_right(pos);
-		case UP_LEFT:
-			return up_left(pos);
-		case DOWN_LEFT:
-			return down_left(pos);
-		case BORN:
-			return -1;
-		default:
-			cerr << "ERRORE IN NEW LOCATION" << endl;
-			return -1;
-		}
+		epoch++;
 	}
 
 	void printLocations() {
