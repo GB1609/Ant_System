@@ -17,12 +17,12 @@ using namespace std;
 struct Ant {
 	bool food;
 	int mySource;
-	int toIncreasePheromon;
+	int pheromone;
 	int currentPosition;
 	int x;
 	int y;
 	Ant(int pos, int toI, int x, int y) {
-		toIncreasePheromon = toI;
+		pheromone = toI;
 		food = false;
 		currentPosition = pos;
 		mySource = pos;
@@ -202,7 +202,7 @@ public:
 	}
 
 	void generate_ants() {
-		if (ants.size() < 200)
+		if (ants.size() < 100)
 			for (int a = 0; a < sources.size(); a++) {
 				pair<int, int> p = intToPair(sources[a]);
 				ants.push_back(Ant(sources[a], max_num, p.first, p.second));
@@ -390,7 +390,7 @@ public:
 					cells[x][y].food = false;
 					for (int f = 0; f < ants.size(); f++) {
 						ants[f].food = false;
-						ants[f].toIncreasePheromon = false;
+						ants[f].pheromone = false;
 					}
 					cout << endl << endl << "MATRICE ALLA FINE" << endl;
 					printMatrix();
@@ -473,7 +473,7 @@ public:
 		pair<int, int> p = intToPair(a);
 		int x = p.first;
 		int y = p.second;
-		int toIncreasePheromon = ant->toIncreasePheromon;
+		int toIncreasePheromon = ant->pheromone;
 		int ant_around = count_ant_around(a, a, AROUND + 1) + 1;
 
 		if (cells[x][y].pheromone < toIncreasePheromon)
@@ -491,8 +491,8 @@ public:
 			ant_around--;
 		}
 
-		if (ant->toIncreasePheromon > 1)
-			ant->toIncreasePheromon--;
+		if (ant->pheromone > 1)
+			ant->pheromone--;
 	}
 	void decrease_pheromone() {
 		for (int a = 0; a < dim; a++)
