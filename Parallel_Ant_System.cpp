@@ -11,11 +11,12 @@
 using namespace std;
 
 const int BEGIN_ANT = 5;
-const int dimension = 20;
-const int width_gui = 40;
+const int dimension = 10;
+const int width_gui = 90;
 const int BEGIN_FOOD = 2000;
 const int POSSIBLE_DIRECTION = 8;
 const int AROUND = 3;
+bool gui_on = true;
 
 struct Ant {
 	bool food;
@@ -159,15 +160,11 @@ void update_gui(int width, int matrix[dimension][dimension],
 
 	int b = food % dimension;
 	int a = food / dimension;
-	cout << "FOOD:" << food << "    a------->" << a << "||||| b------>" << b
-			<< endl;
 
 	al_draw_filled_circle((b * width) + width / 2 + 10,
 			(a * width) + width / 2 + 10, width / 2, food_color);
 	b = source % dimension;
 	a = source / dimension;
-	cout << "SOURCE:" << source << "    a------->" << a << "||||| b------>" << b
-			<< endl;
 	al_draw_filled_circle((b * width) + width / 2 + 10,
 			(a * width) + 10 + width / 2, width / 2, source_color);
 	al_flip_display();
@@ -301,7 +298,7 @@ void propagate(int *cells, int *left_received, int *right_received,
 	bool go = true;
 	int val = v;
 	while (go) {
-		dec = val * 0.1;
+		dec = val * 0.2;
 		if (d == RIGHT)
 			l = right(cP, dimension * dimension);
 		if (d == LEFT)
@@ -334,7 +331,6 @@ void propagate(int *cells, int *left_received, int *right_received,
 
 void propagate_pheromone(Ant *ant, int *cells, int *cell_left, int *cell_right,
 		int fraction, int min, int max, int rank) {
-
 	int a = ant->currentPosition;
 	int to_update = a - (rank * fraction);
 	int toIncreasePheromon = ant->pheromone;
@@ -366,7 +362,7 @@ void propagate_pheromone(Ant *ant, int *cells, int *cell_left, int *cell_right,
 		ant_around--;
 	}
 
-//	cout << "MATRIX" << endl << endl;
+//	cout << "MATRIX OF PROCESS---->" << rank << endl << endl;
 //	int cont = 0;
 //	for (int a = 0; a < dimension * fraction; a++) {
 //		cout << cells[a] << " - ";
@@ -411,11 +407,13 @@ void update(vector<Ant> &my_ants, vector<Ant> &ant_to_send_left,
 					ant_to_send_left.push_back(*f);
 					f = my_ants.erase(f);
 					f--;
+					cerr << "ENTRO1" << endl;
 				}
 				if (x >= max) {
 					ant_to_send_right.push_back(*f);
 					f = my_ants.erase(f);
 					f--;
+					cerr << "ENTRO2" << endl;
 				}
 			}
 		} else {
@@ -442,8 +440,6 @@ void update(vector<Ant> &my_ants, vector<Ant> &ant_to_send_left,
 }
 
 int main(int argc, char **argv) {
-	bool gui_on = true;
-
 	ALLEGRO_DISPLAY *disp;
 
 	if (gui_on)
@@ -490,15 +486,10 @@ int main(int argc, char **argv) {
 			randomSource1 = dist(rng);
 		randomFood1 = 4;
 		randomSource1 = 98;
-		for (int z = 0; z < BEGIN_ANT; z++)
-			all_ants.push_back(
-					Ant(randomSource1, (dimension * dimension),
-							randomSource1 / dimension,
-							randomSource1 % dimension));
-
 	}
 	randomFood1 = 4;
-	randomSource1 = 378;
+	randomSource1 = 98;
+
 	int prc_source = ((randomSource1 / dimension) / BLOCKROWS);
 	int prc_food = ((randomFood1 / dimension) / BLOCKROWS);
 
@@ -540,12 +531,13 @@ int main(int argc, char **argv) {
 	MPI_Cart_shift(linearArrayTopology, 0, 1, &left, &right);
 	MPI_Cart_coords(linearArrayTopology, rank_process, dimensions, coords);
 
-	if (rank_process == prc_source)
+	if (rank_process == prc_source) {
 		for (int z = 0; z < BEGIN_ANT; z++)
 			my_ants.push_back(
 					Ant(randomSource1, (dimension * dimension),
 							randomSource1 / dimension,
 							randomSource1 % dimension));
+	}
 
 	MPI_Datatype ant_mpi;
 	MPI_Datatype type[6] = { MPI_C_BOOL, MPI_INT, MPI_INT, MPI_INT, MPI_INT,
@@ -560,13 +552,14 @@ int main(int argc, char **argv) {
 	MPI_Type_contiguous(BLOCKROWS * BLOCKCOLS, MPI_INT, &rowtype);
 	MPI_Type_commit(&rowtype);
 
+
 	MPI_Datatype singleNeighbourdRowType;
 	MPI_Type_contiguous(BLOCKCOLS, MPI_INT, &singleNeighbourdRowType);
 	MPI_Type_commit(&singleNeighbourdRowType);
 
 	MPI_Request ra[3];
 
-	while (FOOD > 0 && epoch < 2000) {
+	while (FOOD > 0 && epoch < 200) {
 
 		epoch++;
 //		if (rank_process == prc_source && epoch % 2 == 0)
@@ -574,12 +567,26 @@ int main(int argc, char **argv) {
 //					Ant(randomSource1, (dimension * dimension),
 //							randomSource1 / dimension,
 //							randomSource1 % dimension));
+
+
+//		cout << "MATRIX OF PROCESS---->" << rank_process << endl << endl;
+//		int cont = 0;
+//		for (int a = 0; a < dimension * BLOCKROWS; a++) {
+//			cout << processCurrentGeneration[a] << " - ";
+//			cont++;
+//			if (cont == dimension) {
+//				cont = 0;
+//				cout << endl;
+//			}
+//		}
+
+
 		if (rank_process == prc_food)
 			MPI_Bcast(&FOOD, 1, MPI_INT, rank_process, linearArrayTopology);
 
 		update(my_ants, left_ants, right_ants, processCurrentGeneration,
-				left_data, right_data, FOOD, rank_process,  BLOCKROWS,
-				prc_food, randomFood1, randomSource1, min, max);
+				left_data, right_data, FOOD, rank_process, BLOCKROWS, prc_food,
+				randomFood1, randomSource1, min, max);
 
 		int dim = my_ants.size();
 
@@ -587,26 +594,28 @@ int main(int argc, char **argv) {
 			MPI_Isend(&dim, 1, MPI_INT, 0, 47, linearArrayTopology, &ra[0]);
 			MPI_Isend(&my_ants[0], my_ants.size(), ant_mpi, 0, 99,
 					linearArrayTopology, &ra[1]);
-//			MPI_Isend(&processCurrentGeneration, 1, rowtype, 0, 12,
-//					linearArrayTopology, &ra[2]);
+			MPI_Isend(&processCurrentGeneration, 1, rowtype, 0, 12,
+					linearArrayTopology, &ra[2]);
 
 		}
 
 		int dimleft = left_ants.size();
 		int dimright = right_ants.size();
 
-		if (left > -1) {
+		if (left > -1 && left < process) {
+			cerr<<"INVIO A SX"<<endl;
 			MPI_Send(&dimleft, 1, MPI_INT, left, 88, linearArrayTopology);
 			MPI_Send(&left_ants[0], dimleft, ant_mpi, left, 95,
 					linearArrayTopology);
 		}
-		if (right > -1) {
+		if (right > -1 && right < process) {
+			cerr<<"INVIO A DESTRA"<<endl;
 			MPI_Send(&dimright, 1, MPI_INT, right, 89, linearArrayTopology);
 			MPI_Send(&right_ants[0], dimright, ant_mpi, right, 91,
 					linearArrayTopology);
 		}
-		if (right > -1) {
-
+		if (right > -1 && right < process) {
+			cerr<<"RICEVO DA DESTRA"<<endl;
 			MPI_Recv(&dimright, 1, MPI_INT, right, 88, linearArrayTopology,
 					&status);
 			vector<Ant> mod_r(dimright);
@@ -619,8 +628,8 @@ int main(int argc, char **argv) {
 				my_ants.push_back(mod_r[j]);
 			}
 		}
-		if (left > -1) {
-
+		if (left > -1 && left < process) {
+			cerr<<"RICEVO DA SX"<<endl;
 			MPI_Recv(&dimleft, 1, MPI_INT, left, 89, linearArrayTopology,
 					&status);
 
@@ -634,36 +643,35 @@ int main(int argc, char **argv) {
 		}
 
 		if (gui_on && rank_process != 0) {
-			for (int i = 0; i < 2; i++)
+			for (int i = 0; i < 3; i++)
 				MPI_Wait(&ra[i], &status);
 
 		}
 		if (gui_on && rank_process == 0) {
 			all_ants.clear();
-
 			for (int i = 1; i < process; i++) {
 				MPI_Recv(&dim, 1, MPI_INT, i, 47, linearArrayTopology, &status);
-
 				vector<Ant> mod(dim);
 				MPI_Recv(&mod[0], dim, ant_mpi, i, 99, linearArrayTopology,
 						&status);
-//				MPI_Recv(&my_data[i * BLOCKROWS], 1, rowtype, i, 12,
-//						linearArrayTopology, &status);
-
-
+				MPI_Recv(&my_data[(i-1) * BLOCKROWS], 1, rowtype, i, 12,
+						linearArrayTopology, &status);
 				for (int j = 0; j < dim; j++)
 					all_ants.push_back(mod[j]);
-
-
 			}
 
 			for (int i = 0; i < my_ants.size(); i++)
 				all_ants.push_back(my_ants[i]);
 			for (int i = 0; i < BLOCKROWS * BLOCKCOLS; i++) {
-				int curr_row = (i / BLOCKROWS) + (BLOCKROWS * rank_process);
+				int curr_row = (i / BLOCKCOLS) + (BLOCKROWS * rank_process);
 				int curr_col = (i % BLOCKCOLS) + (BLOCKROWS * rank_process);
 				my_data[curr_row][curr_col] = processCurrentGeneration[i];
 			}
+			cout<<endl<<"MATRIX "<<endl;
+			for(int a=0;a<dimension;a++)
+			{	for (int b=0;b<dimension;b++)
+					cout<<"-"<<my_data[a][b]<<" -";cout<<endl;}
+			cout<<endl<<"END MATRIX "<<endl;
 
 			update_gui(width_gui, my_data, all_ants, randomSource1,
 					randomFood1);
