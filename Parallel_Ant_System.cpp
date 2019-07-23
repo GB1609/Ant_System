@@ -510,7 +510,6 @@ int main(int argc, char **argv) {
 	int process, rank_process;
 
 	MPI_Init(NULL, NULL);
-	double begin_execution = MPI_Wtime();
 
 	MPI_Comm_size(MPI_COMM_WORLD, &process);
 	if (dimension % process != 0) {
@@ -610,7 +609,7 @@ int main(int argc, char **argv) {
 	MPI_Type_contiguous(BLOCKCOLS, MPI_INT, &single_row_to_send_mpi);
 	MPI_Type_commit(&single_row_to_send_mpi);
 	MPI_Request ra[3];
-
+	double begin_execution = MPI_Wtime();
 	while (FOOD > 0) {
 		if (rank_process == prc_source && epoch % 5 == 0)
 			my_ants.push_back(
