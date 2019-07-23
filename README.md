@@ -24,7 +24,9 @@ each of which is assigned to a different process.
 
 The division was carried out in rows, dividing the matrix by mirroring the world equally between the processes.
 
-![Screenshot](https://github.com/GB1609/AntSystem/blob/master/readme_img/subdivision.jpg)
+<p align="center">
+  <img src="https://github.com/GB1609/AntSystem/blob/master/readme_img/subdivision.jpg" width="320">
+</p>
 
 Each process will manage the updating of the elements present in the competence line, or the cells (with the value of the pheromone) and the ants.
 
@@ -61,7 +63,10 @@ The implementation is very simple, each cell is colored based on the amount of p
 1. Every cell with an ant without food is colored black
 1. Every cell with an ant with food is colored yellow
 
-![Screenshot](https://github.com/GB1609/AntSystem/blob/master/readme_img/image0.png)
+<p align="center">
+  <img src="https://github.com/GB1609/AntSystem/blob/master/readme_img/image0.png" width="500">
+</p>
+
 
 
 ## Results
