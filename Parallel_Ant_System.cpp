@@ -11,14 +11,14 @@
 using namespace std;
 
 const int BEGIN_ANT = 100;
-const int dimension = 50;
+const int dimension = 200;
 const int width_gui = 10;
 const int BEGIN_FOOD = 750;
 const int POSSIBLE_DIRECTION = 8;
 const int AROUND = 2;
 const int RF1 = dimension + 2;
 const int RS1 = dimension * dimension - (dimension) - 1;
-const bool gui_on = true;
+const bool gui_on = false;
 
 struct Ant {
 	bool food;
