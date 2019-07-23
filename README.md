@@ -1,7 +1,7 @@
 # ANT_SYSTEM
     
 ## Overview
-This program is an implementation of ant_system model, a cellular automaton that simulates the behavior of an ant colony in search of food with use of **MPI**.
+This program is an implementation of ant_system model, a cellular automaton that simulates the behavior of an ant colony in search of food with use of **MPI**, is a communication protocol for computers..
 
 
 In the initial state there is a number of ants located at a point of origin, called a **nest**.
@@ -51,6 +51,10 @@ Le comunicazioni avvengono tramite l'ausilio di 3 datatype:
 1. MPI_Datatype (*MPI_Type_contiguous*) single_row_to_send_mpi: to send a single row of matrix to the limiting process)
 1. MPI_Datatype (*MPI_Type_contiguous*) all_data_row: to send all sub_matrix to process 0 for gui.
 
+## GUI implementation
+The gui was implemented with Allegro, a a cross-platform library. 
+
+
 
 ## Results
 
@@ -58,5 +62,5 @@ Le comunicazioni avvengono tramite l'ausilio di 3 datatype:
 
 ## Technologies
 
-* ALLEGRO
+* ALLEGRO https://liballeg.org/git.html
 * MPI
