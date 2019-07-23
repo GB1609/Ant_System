@@ -11,7 +11,7 @@
 using namespace std;
 
 const int BEGIN_ANT = 100;
-const int dimension = 100;
+const int dimension = 150;
 const int width_gui = 4;
 const int BEGIN_FOOD = 750;
 const int POSSIBLE_DIRECTION = 8;
