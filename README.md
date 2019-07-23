@@ -30,6 +30,7 @@ Each process will manage the updating of the elements present in the competence 
 
 
 
+
 Come accennato prima, in ogni versione, il partizionamento viene effettuato in modo equo fra
 i vari processi. Il processo master si occupa, solamente all’inizio, di configurare l’ambiente
 iniziale della simulazione e successivamente di spedire una partizione dei dati ad ogni
