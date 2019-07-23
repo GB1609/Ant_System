@@ -35,9 +35,9 @@ enum Direction {
 	UP, DOWN, LEFT, RIGHT, UP_LEFT, UP_RIGHT, DOWN_LEFT, DOWN_RIGHT, BORN
 };
 
-const int BEGIN_FOOD = 2000;
+const int BEGIN_FOOD = 750;
 const int POSSIBLE_DIRECTION = 8;
-const int AROUND = 3;
+const int AROUND = 2;
 
 struct Cell {
 	int pheromone;
@@ -297,7 +297,8 @@ public:
 			{
 		int a = ant->currentPosition;
 		if (epoch % 500 == 0) {
-			int sp = search_pheromone(a);
+//			int sp = search_pheromone(a);
+			int sp=0;
 			if (sp > 0)
 				return sp;
 		}

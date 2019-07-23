@@ -7,7 +7,9 @@
 #include "Utilities/Graph.h"
 using namespace std;
 
-const int BEGIN_ANT = 20;
+const int BEGIN_ANT = 100;
+
+const int GUI = false;
 
 void update_gui(int width, Graph *g) {
 	const ALLEGRO_COLOR food_color = al_map_rgb(0, 155, 0);
@@ -48,7 +50,7 @@ void update_gui(int width, Graph *g) {
 }
 
 int main(int argc, char **argv) {
-	int dimension = 100;
+	int dimension = 150;
 	int width = 10;
 	Graph g(dimension);
 	std::random_device dev;
@@ -62,44 +64,47 @@ int main(int argc, char **argv) {
 	while (abs(randomFood1 - randomSource1) < g.getDimMax() / 3)
 		randomSource1 = dist(rng);
 	g.intitializate_matrix();
-	randomFood1 = 9756;
+	randomFood1 = 152;
 //	randomFood2 = 5462;
-	randomSource1 = 98;
+	randomSource1 = 22348;
 	g.setFood(randomFood1);
 //	g.setFood(randomFood2);
 	g.setSource(randomSource1);
-	g.printLocations();
-
+	time_t start,end;
+	time (&start);
 	ALLEGRO_DISPLAY *display = NULL;
-	if (!al_init()) {
-		fprintf(stderr, "failed to initialize allegro!\n");
-		return -1;
-	}
-	display = al_create_display((dimension * width) + 25,
-			(dimension * width) + 25);
-	if (!display) {
-		fprintf(stderr, "failed to create display!\n");
-		return -1;
-	}
+	if (GUI) {
 
+		if (!al_init()) {
+			fprintf(stderr, "failed to initialize allegro!\n");
+			return -1;
+		}
+		display = al_create_display((dimension * width) + 25,
+				(dimension * width) + 25);
+		if (!display) {
+			fprintf(stderr, "failed to create display!\n");
+			return -1;
+		}
+	}
 	int epoch = 0;
 	for (int a = 0; a < BEGIN_ANT; a++)
 		g.generate_ants();
 	while (g.there_is_food()) {
-		cout << endl << endl << "EPOCA: " << epoch << endl;
-		cout << "FOOD REMAINS---> " << g.getTotalFood() << " ANT REMAINED---->"
-				<< g.getAnts().size() << endl << endl;
 		if (epoch % 5 == 0)
 			g.generate_ants();
-		if (epoch % 2 == 0)
-			g.decrease_pheromone();
-		if (epoch % 1000 == 0)
-			g.printMatrix();
-		update_gui(width, &g);
+//		if (epoch % 2 == 0)
+//			g.decrease_pheromone();
+//		if (epoch % 1000 == 0)
+//			g.printMatrix();
+		if (GUI)
+			update_gui(width, &g);
 		g.update();
 		epoch++;
 	}
-	al_destroy_display(display);
-	cout << endl << endl << "END" << endl;
+	time(&end);
+	double dif = difftime (end,start);
+	printf ("Elasped time is %.2lf seconds.", dif );
+	if (GUI)
+		al_destroy_display(display);
 	return 0;
 }

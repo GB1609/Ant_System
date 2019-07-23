@@ -10,15 +10,15 @@
 
 using namespace std;
 
-const int BEGIN_ANT = 50;
-const int dimension = 100;
-const int width_gui = 3;
+const int BEGIN_ANT = 100;
+const int dimension = 50;
+const int width_gui = 10;
 const int BEGIN_FOOD = 750;
 const int POSSIBLE_DIRECTION = 8;
 const int AROUND = 2;
-const int RF1=dimension+2;
-const int RS1=dimension*dimension -(dimension)-1;
-const bool gui_on = false;
+const int RF1 = dimension + 2;
+const int RS1 = dimension * dimension - (dimension) - 1;
+const bool gui_on = true;
 
 struct Ant {
 	bool food;
@@ -180,9 +180,7 @@ void decrease_pheromone(int *data, int w) {
 
 int search_pheromone(Ant *ant, int *cells, int fraction, int min, int max,
 		int rank, int *left_received, int *right_received) {
-
 	int m = INT_MAX;
-
 	int r = ant->currentPosition;
 	int count = -1;
 	int toReturn = -1;
@@ -230,8 +228,6 @@ int search_pheromone(Ant *ant, int *cells, int fraction, int min, int max,
 		}
 		down = position_down(down, dimension * dimension);
 	}
-	return toReturn;
-
 	count = -1;
 	int up = position_up(r, dimension * dimension);
 	while (up >= 0) {
@@ -269,7 +265,6 @@ int find_direction_without_food(Ant *ant, int *cells, int fraction, int min,
 		vector<int> possible_move { left_pos, right_pos, up_pos, down_pos,
 				upLeft_pos, upRight_pos, downLeft_pos, downRight_pos };
 		int m = 0;
-		to_return = -1;
 		for (int a = 0; a < POSSIBLE_DIRECTION; a++) {
 			if (possible_move[a] >= min && possible_move[a] < max
 					&& m
@@ -285,7 +280,7 @@ int find_direction_without_food(Ant *ant, int *cells, int fraction, int min,
 				} else if (possible_move[a] >= max
 						&& possible_move[a] < max + dimension)
 					if (right_received[possible_move[a] - max] > m) {
-						m = left_received[possible_move[a] - max];
+						m = right_received[possible_move[a] - max];
 						to_return = possible_move[a];
 					}
 		}
@@ -302,6 +297,8 @@ int find_direction_without_food(Ant *ant, int *cells, int fraction, int min,
 			}
 		}
 	}
+	cout << "TO RETURN  " << to_return << endl;
+
 	return to_return;
 }
 
@@ -479,7 +476,7 @@ void update(vector<Ant> &my_ants, vector<Ant> &ant_to_send_left,
 			}
 		} else {
 			int newPositon = find_direction_without_food(&*f, my_cell, fraction,
-					min, max, my_rank, left_received, right_received,epoch);
+					min, max, my_rank, left_received, right_received, epoch);
 			pair<int, int> p = intToPair(newPositon);
 			int x = p.first;
 			int y = p.second;
@@ -530,27 +527,10 @@ int main(int argc, char **argv) {
 	int randomFood1, randomSource1;
 	vector<Ant> all_ants;
 	int epoch = 0;
-	if (rank_process == 0) {
+	if (rank_process == 0 && gui_on)
 		if (gui_on)
 			disp = al_create_display(dimension * width_gui + 25,
 					dimension * width_gui + 25);
-		std::random_device dev;
-		std::mt19937 rng(dev());
-		std::uniform_int_distribution<std::mt19937::result_type> dist(0,
-				(dimension * dimension) - 1);
-		srand(time(0));
-
-		for (int i = 0; i < dimension; i++)
-			for (int b = 0; b < dimension; b++)
-				my_data[i][b] = 0;
-
-		randomFood1 = dist(rng);
-		randomSource1 = randomFood1;
-		while (abs(randomFood1 - randomSource1) < (dimension * dimension) / 3)
-			randomSource1 = dist(rng);
-		randomFood1 = RF1;
-		randomSource1 = RS1;
-	}
 	randomFood1 = RF1;
 	randomSource1 = RS1;
 
@@ -559,7 +539,7 @@ int main(int argc, char **argv) {
 
 	vector<Ant> my_ants;
 
-	int processCurrentGeneration[BLOCKROWS * BLOCKCOLS];
+	int my_cells[BLOCKROWS * BLOCKCOLS];
 	int left_data[BLOCKCOLS];
 	int right_data[BLOCKCOLS];
 	int min = rank_process * BLOCKROWS * BLOCKCOLS;
@@ -580,7 +560,7 @@ int main(int argc, char **argv) {
 
 	for (int i = 0; i < BLOCKROWS * BLOCKCOLS; i++) {
 
-		processCurrentGeneration[i] = 0;
+		my_cells[i] = 0;
 
 		if (i < BLOCKCOLS) {
 			left_data[i] = 0;
@@ -641,7 +621,7 @@ int main(int argc, char **argv) {
 		right_ants.clear();
 
 		update(my_ants, left_ants, right_ants, left_cell_received,
-				right_cell_received, processCurrentGeneration, left_data,
+				right_cell_received, my_cells, left_data,
 				right_data, FOOD, rank_process, BLOCKROWS, prc_food,
 				randomFood1, randomSource1, min, max, epoch);
 
@@ -659,7 +639,7 @@ int main(int argc, char **argv) {
 			MPI_Isend(&dim, 1, MPI_INT, 0, 47, linearArrayTopology, &ra[0]);
 			MPI_Isend(&my_ants[0], my_ants.size(), ant_mpi, 0, 99,
 					linearArrayTopology, &ra[1]);
-			MPI_Isend(&processCurrentGeneration, 1, all_data_row, 0, 12,
+			MPI_Isend(&my_cells, 1, all_data_row, 0, 12,
 					linearArrayTopology, &ra[2]);
 		}
 
@@ -671,7 +651,7 @@ int main(int argc, char **argv) {
 			MPI_Send(&left_ants[0], dimleft, ant_mpi, left, 95,
 					linearArrayTopology);
 			for (int a = 0; a < dimension; a++)
-				left_cell_to_send[a] = processCurrentGeneration[a];
+				left_cell_to_send[a] = my_cells[a];
 			MPI_Send(&left_cell_to_send[0], 1, single_row_to_send_mpi, left, 76,
 					linearArrayTopology);
 		}
@@ -681,7 +661,7 @@ int main(int argc, char **argv) {
 					linearArrayTopology);
 			for (int a = dimension; a > 0; a--)
 				right_cell_to_send[dimension - a] =
-						processCurrentGeneration[(dimension * BLOCKROWS) - a];
+						my_cells[(dimension * BLOCKROWS) - a];
 			MPI_Send(&right_cell_to_send[0], 1, single_row_to_send_mpi, right,
 					75, linearArrayTopology);
 		}
@@ -742,7 +722,7 @@ int main(int argc, char **argv) {
 			for (int i = 0; i < BLOCKROWS * BLOCKCOLS; i++) {
 				int curr_row = (i / BLOCKCOLS) + (BLOCKROWS * rank_process);
 				int curr_col = (i % BLOCKCOLS) + (BLOCKROWS * rank_process);
-				my_data[curr_row][curr_col] = processCurrentGeneration[i];
+				my_data[curr_row][curr_col] = my_cells[i];
 			}
 
 			update_gui(width_gui, my_data, all_ants, randomSource1,
