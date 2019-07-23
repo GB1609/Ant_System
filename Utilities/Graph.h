@@ -290,7 +290,6 @@ public:
 			}
 			r = down(r);
 		}
-
 		return toReturn;
 	}
 

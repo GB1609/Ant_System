@@ -10,13 +10,13 @@
 
 using namespace std;
 
-const int BEGIN_ANT = 50;
-const int dimension = 100;
-const int width_gui = 9;
-const int BEGIN_FOOD = 2000;
+const int BEGIN_ANT = 25;
+const int dimension = 50;
+const int width_gui = 15;
+const int BEGIN_FOOD = 750;
 const int POSSIBLE_DIRECTION = 8;
 const int AROUND = 2;
-bool gui_on = true;
+const bool gui_on = true;
 
 struct Ant {
 	bool food;
@@ -176,55 +176,133 @@ void decrease_pheromone(int *data, int w) {
 			data[a]--;
 }
 
+int search_pheromone(Ant *ant, int *cells, int fraction, int min, int max,
+		int rank, int *left_received, int *right_received) {
+
+	int m = INT_MAX;
+
+	int r = ant->currentPosition;
+	int count = -1;
+	int toReturn = -1;
+	int to_verify;
+	int left = position_left(r, dimension * dimension);
+	while (left >= 0) {
+		count++;
+		to_verify = left - (rank * fraction * dimension);
+		if (min <= left && left < max && cells[to_verify] > 0) {
+			if (count < min) {
+				m = count;
+				toReturn = left;
+			}
+			break;
+		}
+		left = position_left(left, dimension * dimension);
+	}
+
+	count = -1;
+	int right = position_right(r, dimension * dimension);
+	while (right >= 0) {
+		count++;
+		to_verify = right - (rank * fraction * dimension);
+		if (min <= right && right < max && cells[to_verify] > 0) {
+			if (count < min) {
+				m = count;
+				toReturn = right;
+			}
+			break;
+		}
+		right = position_right(right, dimension * dimension);
+	}
+
+	count = -1;
+	int down = position_down(r, dimension * dimension);
+	while (down >= 0) {
+		count++;
+		to_verify = down - (rank * fraction * dimension);
+		if (min <= down && down < max && cells[to_verify] > 0) {
+			if (count < min) {
+				m = count;
+				toReturn = down;
+			}
+			break;
+		}
+		down = position_down(down, dimension * dimension);
+	}
+	return toReturn;
+
+	count = -1;
+	int up = position_up(r, dimension * dimension);
+	while (up >= 0) {
+		count++;
+		to_verify = up - (rank * fraction * dimension);
+		if (min <= up && down < up && cells[to_verify] > 0) {
+			if (count < min) {
+				m = count;
+				toReturn = up;
+			}
+			break;
+		}
+		up = position_down(up, dimension * dimension);
+	}
+	return toReturn;
+}
+
 int find_direction_without_food(Ant *ant, int *cells, int fraction, int min,
-		int max, int rank, int *left_received, int *right_received) //guarda se ce feromone attorno e prende quello con quantita maggiore (a caso altrimenti)
+		int max, int rank, int *left_received, int *right_received, int epoch) //guarda se ce feromone attorno e prende quello con quantita maggiore (a caso altrimenti)
 		{
 	int a = ant->currentPosition;
-	int left_pos = position_left(a, dimension * dimension);
-	int right_pos = position_right(a, dimension * dimension);
-	int up_pos = position_up(a, dimension * dimension);
-	int down_pos = position_down(a, dimension * dimension);
-	int upLeft_pos = up_left(a, dimension * dimension);
-	int upRight_pos = up_right(a, dimension * dimension);
-	int downLeft_pos = down_left(a, dimension * dimension);
-	int downRight_pos = down_right(a, dimension * dimension);
-	vector<int> possible_move { left_pos, right_pos, up_pos, down_pos,
-			upLeft_pos, upRight_pos, downLeft_pos, downRight_pos };
-	int m = 0;
 	int to_return = -1;
-	for (int a = 0; a < POSSIBLE_DIRECTION; a++) {
-		if (possible_move[a] >= min && possible_move[a] < max
-				&& m
-						< cells[possible_move[a] - (fraction * dimension * rank)]) {
-			m = cells[possible_move[a] - (rank * fraction * dimension)];
-			to_return = possible_move[a];
-		} else if (possible_move[a] >= min - dimension
-				&& possible_move[a] < min)
-			if (left_received[possible_move[a] - (min - dimension)] > m) {
-				m = left_received[possible_move[a] - (min - dimension)];
+	if (epoch % 500 == 0)
+		to_return = search_pheromone(ant, cells, fraction, min, max, rank,
+				left_received, right_received);
+	if (to_return == -1) {
+		int left_pos = position_left(a, dimension * dimension);
+		int right_pos = position_right(a, dimension * dimension);
+		int up_pos = position_up(a, dimension * dimension);
+		int down_pos = position_down(a, dimension * dimension);
+		int upLeft_pos = up_left(a, dimension * dimension);
+		int upRight_pos = up_right(a, dimension * dimension);
+		int downLeft_pos = down_left(a, dimension * dimension);
+		int downRight_pos = down_right(a, dimension * dimension);
+		vector<int> possible_move { left_pos, right_pos, up_pos, down_pos,
+				upLeft_pos, upRight_pos, downLeft_pos, downRight_pos };
+		int m = 0;
+		to_return = -1;
+		for (int a = 0; a < POSSIBLE_DIRECTION; a++) {
+			if (possible_move[a] >= min && possible_move[a] < max
+					&& m
+							< cells[possible_move[a]
+									- (fraction * dimension * rank)]) {
+				m = cells[possible_move[a] - (rank * fraction * dimension)];
 				to_return = possible_move[a];
-			} else if (possible_move[a] >= max
-					&& possible_move[a] < max + dimension)
-				if (right_received[possible_move[a] - max] > m) {
-					m = left_received[possible_move[a] - max];
+			} else if (possible_move[a] >= min - dimension
+					&& possible_move[a] < min)
+				if (left_received[possible_move[a] - (min - dimension)] > m) {
+					m = left_received[possible_move[a] - (min - dimension)];
 					to_return = possible_move[a];
-				}
-	}
-	if (to_return == -1) //random
-			{
-		std::random_device dev;
-		std::mt19937 rng(dev());
-		std::uniform_int_distribution<std::mt19937::result_type> dist(0,
-				POSSIBLE_DIRECTION - 1);
-		while (to_return == -1) {
-			int index = dist(rng);
-			if (possible_move[index] > -1)
-				to_return = possible_move[index];
+				} else if (possible_move[a] >= max
+						&& possible_move[a] < max + dimension)
+					if (right_received[possible_move[a] - max] > m) {
+						m = left_received[possible_move[a] - max];
+						to_return = possible_move[a];
+					}
 		}
-
+		if (to_return == -1) //random
+				{
+			std::random_device dev;
+			std::mt19937 rng(dev());
+			std::uniform_int_distribution<std::mt19937::result_type> dist(0,
+					POSSIBLE_DIRECTION - 1);
+			while (to_return == -1) {
+				int index = dist(rng);
+				if (possible_move[index] > -1)
+					to_return = possible_move[index];
+			}
+		}
 	}
 	return to_return;
 }
+
 int come_back_with_food(Ant *ant, int source) {
 	int a = ant->currentPosition;
 	int possible_move[] =
@@ -338,9 +416,9 @@ void propagate_pheromone(Ant *ant, int *cells, int *cell_left, int *cell_right,
 
 	while (ant_around > 0) {
 		propagate(cells, cell_left, cell_right, cell_left, cell_right, a,
-				toIncreasePheromon, LEFT, min, max, rank, fraction); //TODO
+				toIncreasePheromon, LEFT, min, max, rank, fraction);
 		propagate(cells, cell_left, cell_right, cell_left, cell_right, a,
-				toIncreasePheromon, RIGHT, min, max, rank, fraction); //TODO
+				toIncreasePheromon, RIGHT, min, max, rank, fraction);
 		propagate(cells, cell_left, cell_right, cell_left, cell_right, a,
 				toIncreasePheromon, UP, min, max, rank, fraction); //TODO
 		propagate(cells, cell_left, cell_right, cell_left, cell_right, a,
@@ -399,7 +477,7 @@ void update(vector<Ant> &my_ants, vector<Ant> &ant_to_send_left,
 			}
 		} else {
 			int newPositon = find_direction_without_food(&*f, my_cell, fraction,
-					min, max, my_rank, left_received, right_received);
+					min, max, my_rank, left_received, right_received,epoch);
 			pair<int, int> p = intToPair(newPositon);
 			int x = p.first;
 			int y = p.second;
@@ -422,9 +500,10 @@ void update(vector<Ant> &my_ants, vector<Ant> &ant_to_send_left,
 //		if (epoch % 2000)
 //			decrease_pheromone(my_cell, dimension * fraction);
 }
-
 int main(int argc, char **argv) {
 	ALLEGRO_DISPLAY *disp;
+
+	int FOOD = BEGIN_FOOD;
 
 	if (gui_on)
 		al_init();
@@ -449,7 +528,6 @@ int main(int argc, char **argv) {
 	int randomFood1, randomSource1;
 	vector<Ant> all_ants;
 	int epoch = 0;
-	int FOOD = 1500;
 	if (rank_process == 0) {
 		if (gui_on)
 			disp = al_create_display(dimension * width_gui + 25,
@@ -469,10 +547,10 @@ int main(int argc, char **argv) {
 		while (abs(randomFood1 - randomSource1) < (dimension * dimension) / 3)
 			randomSource1 = dist(rng);
 		randomFood1 = 124;
-		randomSource1 = 9775;
+		randomSource1 = 2375;
 	}
-	randomFood1 = 124;
-	randomSource1 = 9775;
+	randomFood1 = 101;
+	randomSource1 = 2379;
 
 	int prc_source = ((randomSource1 / dimension) / BLOCKROWS);
 	int prc_food = ((randomFood1 / dimension) / BLOCKROWS);
@@ -549,8 +627,6 @@ int main(int argc, char **argv) {
 	MPI_Datatype single_row_to_send_mpi;
 	MPI_Type_contiguous(BLOCKCOLS, MPI_INT, &single_row_to_send_mpi);
 	MPI_Type_commit(&single_row_to_send_mpi);
-	if (rank_process == prc_food)
-		MPI_Bcast(&FOOD, 1, MPI_INT, rank_process, linearArrayTopology);
 	MPI_Request ra[3];
 
 	while (FOOD > 0) {
@@ -568,7 +644,12 @@ int main(int argc, char **argv) {
 				randomFood1, randomSource1, min, max, epoch);
 
 		if (rank_process == prc_food)
-			MPI_Bcast(&FOOD, 1, MPI_INT, rank_process, linearArrayTopology);
+			for (int a = 0; a < process; a++)
+				MPI_Send(&FOOD, 1, MPI_INT, a, 10, linearArrayTopology);
+
+		if (rank_process != prc_food)
+			MPI_Recv(&FOOD, 1, MPI_INT, prc_food, 10, linearArrayTopology,
+					&status);
 
 		int dim = my_ants.size();
 
