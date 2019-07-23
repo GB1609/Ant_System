@@ -22,28 +22,35 @@ GUI was implemented with **ALLEGRO** library.
 The parallel implementation consists in a separation of problem in n sub_problem 
 each of which is assigned to a different process.
 
-
 The division was carried out in rows, dividing the matrix by mirroring the world equally between the processes.
 
+![Screenshot](https://github.com/GB1609/AntSystem/blob/master/readme_img/subdivision.jpg)
 
 Each process will manage the updating of the elements present in the competence line, or the cells (with the value of the pheromone) and the ants.
 
+Every Process receive informations about cells and ants from the process next to him, both right and left.
+This is due to the fact that every process to manage the ants that are near the edges needs to know the data of the edges on its left and on its right. Since we are not facing a problem with the toroidal world, the first process will send exclusively to the one on its right, while the process to the left only.
 
+### Details of implementation
 
+At beginning the process 0 initiliazate GUI, with source and food location.
 
-Come accennato prima, in ogni versione, il partizionamento viene effettuato in modo equo fra
-i vari processi. Il processo master si occupa, solamente all’inizio, di configurare l’ambiente
-iniziale della simulazione e successivamente di spedire una partizione dei dati ad ogni
-processo, a questo punto, ogni processo effettuerà le varie operazioni di aggiornamento sulla
-propria partizione ad esclusione delle celle che si trovano sul bordo. Questo è fondamentale
-poiché essendo lo stato di ogni cella strettamente dipendente da quello delle celle del
-vicinato, le celle sul bordo hanno bisogno di conoscere lo stato di celle che appartengono ad
-un altro processo, per tale ragione vengono gestiti separatamente dal resto. Infatti, all’inizio
-della computazione di ogni step ogni processo riceve in modo ​ non bloccante ​ i bordi di cui
-necessita dai processi vicini, effettua l’aggiornamento delle celle centrali e successivamente
-verifica che i bordi necessari siano stati effettivamente ricevuti, altrimenti rimane in attesa di
-essi. Non appena ogni processo termina il proprio aggiornamento spedisce i nuovi dati al
-master che si occuperà di effettuare il rendering delle informazioni.
+Every Process must manage:
+1. A vector of ants in its portion
+    * move them randomly if they haven't food
+    * move them in direction of source if they have food
+    * expand pheromone in a neighborhood starting from its position
+1. A vector of cells in its portion
+1. The expansion of pheromone in its portion
+1. Send to its neighbours the ants that leave its portions of matrix
+1. Receive from its neighbours 
+1. Send to Process 0 all data for gui display
+
+Le comunicazioni avvengono tramite l'ausilio di 3 datatype:
+1. MPI_Datatype (*MPI_STRUCT*) ant_mpi: to send and receive the ants that leave or enter in a process
+1. MPI_Datatype (*MPI_Type_contiguous*) single_row_to_send_mpi: to send a single row of matrix to the limiting process)
+1. MPI_Datatype (*MPI_Type_contiguous*) all_data_row: to send all sub_matrix to process 0 for gui.
+
 
 ## Results
 
@@ -51,5 +58,5 @@ master che si occuperà di effettuare il rendering delle informazioni.
 
 ## Technologies
 
-** ALLEGRO **
-** MPI **
+* ALLEGRO
+* MPI
