@@ -11,14 +11,15 @@
 using namespace std;
 
 const int BEGIN_ANT = 100;
-const int dimension = 200;
-const int width_gui = 10;
+const int dimension = 100;
+const int width_gui = 4;
 const int BEGIN_FOOD = 750;
 const int POSSIBLE_DIRECTION = 8;
 const int AROUND = 2;
 const int RF1 = dimension + 2;
 const int RS1 = dimension * dimension - (dimension) - 1;
 const bool gui_on = false;
+const int max_num=dimension*dimension;
 
 struct Ant {
 	bool food;
@@ -45,55 +46,55 @@ enum Direction {
 	UP, DOWN, LEFT, RIGHT, UP_LEFT, UP_RIGHT, DOWN_LEFT, DOWN_RIGHT, BORN
 };
 
-int position_left(int n, int max_num) {
+int position_left(int n) {
 	int toCheck = n - 1;
 	if (toCheck > -1 && toCheck % dimension != dimension - 1)
 		return n - 1;
 	return -1;
 }
 
-int position_right(int n, int max_num) {
+int position_right(int n) {
 	int toCheck = n + 1;
 	if (toCheck < max_num && toCheck % dimension != 0)
 		return n + 1;
 	return -1;
 }
 
-int position_down(int n, int max_num) {
+int position_down(int n) {
 	if (n + dimension < max_num)
 		return n + dimension;
 	return -1;
 }
 
-int position_up(int n, int max_num) {
+int position_up(int n) {
 	if (n - dimension > -1)
 		return n - dimension;
 	return -1;
 }
 
-int up_left(int n, int max_num) {
-	int toCheck = position_up(n, max_num) - 1;
+int up_left(int n) {
+	int toCheck = position_up(n) - 1;
 	if (toCheck > -1 && (toCheck % dimension) != dimension - 1)
 		return toCheck;
 	return -1;
 }
 
-int up_right(int n, int max_num) {
-	int toCheck = position_up(n, max_num) + 1;
+int up_right(int n) {
+	int toCheck = position_up(n) + 1;
 	if (toCheck > -1 && (toCheck % dimension) != 0)
 		return toCheck;
 	return -1;
 }
 
-int down_right(int n, int max_num) {
-	int toCheck = position_down(n, max_num) + 1;
+int down_right(int n) {
+	int toCheck = position_down(n) + 1;
 	if (toCheck < max_num && (toCheck % dimension) != 0)
 		return toCheck;
 	return -1;
 }
 
-int down_left(int n, int max_num) {
-	int toCheck = position_down(n, max_num) - 1;
+int down_left(int n) {
+	int toCheck = position_down(n) - 1;
 	if (toCheck < max_num && (toCheck % dimension) != dimension - 1)
 		return toCheck;
 	return -1;
@@ -134,7 +135,7 @@ void update_gui(int width, int matrix[dimension][dimension],
 	const ALLEGRO_COLOR source_color = al_map_rgb(51, 51, 204);
 	const ALLEGRO_COLOR ant_with_food = al_map_rgb(255, 200, 15);
 
-	int maxValue = dimension * dimension;
+	int maxValue = max_num;
 	int limit_draw = maxValue * 0.3;
 	for (int a = 0; a < dimension; a++)
 		for (int b = 0; b < dimension; b++) {
@@ -185,7 +186,7 @@ int search_pheromone(Ant *ant, int *cells, int fraction, int min, int max,
 	int count = -1;
 	int toReturn = -1;
 	int to_verify;
-	int left = position_left(r, dimension * dimension);
+	int left = position_left(r);
 	while (left >= 0) {
 		count++;
 		to_verify = left - (rank * fraction * dimension);
@@ -196,11 +197,11 @@ int search_pheromone(Ant *ant, int *cells, int fraction, int min, int max,
 			}
 			break;
 		}
-		left = position_left(left, dimension * dimension);
+		left = position_left(left);
 	}
 
 	count = -1;
-	int right = position_right(r, dimension * dimension);
+	int right = position_right(r);
 	while (right >= 0) {
 		count++;
 		to_verify = right - (rank * fraction * dimension);
@@ -211,11 +212,11 @@ int search_pheromone(Ant *ant, int *cells, int fraction, int min, int max,
 			}
 			break;
 		}
-		right = position_right(right, dimension * dimension);
+		right = position_right(right);
 	}
 
 	count = -1;
-	int down = position_down(r, dimension * dimension);
+	int down = position_down(r);
 	while (down >= 0) {
 		count++;
 		to_verify = down - (rank * fraction * dimension);
@@ -226,10 +227,10 @@ int search_pheromone(Ant *ant, int *cells, int fraction, int min, int max,
 			}
 			break;
 		}
-		down = position_down(down, dimension * dimension);
+		down = position_down(down);
 	}
 	count = -1;
-	int up = position_up(r, dimension * dimension);
+	int up = position_up(r);
 	while (up >= 0) {
 		count++;
 		to_verify = up - (rank * fraction * dimension);
@@ -240,7 +241,7 @@ int search_pheromone(Ant *ant, int *cells, int fraction, int min, int max,
 			}
 			break;
 		}
-		up = position_down(up, dimension * dimension);
+		up = position_down(up);
 	}
 	return toReturn;
 }
@@ -254,14 +255,14 @@ int find_direction_without_food(Ant *ant, int *cells, int fraction, int min,
 		to_return = search_pheromone(ant, cells, fraction, min, max, rank,
 				left_received, right_received);
 	if (to_return == -1) {
-		int left_pos = position_left(a, dimension * dimension);
-		int right_pos = position_right(a, dimension * dimension);
-		int up_pos = position_up(a, dimension * dimension);
-		int down_pos = position_down(a, dimension * dimension);
-		int upLeft_pos = up_left(a, dimension * dimension);
-		int upRight_pos = up_right(a, dimension * dimension);
-		int downLeft_pos = down_left(a, dimension * dimension);
-		int downRight_pos = down_right(a, dimension * dimension);
+		int left_pos = position_left(a);
+		int right_pos = position_right(a);
+		int up_pos = position_up(a);
+		int down_pos = position_down(a);
+		int upLeft_pos = up_left(a);
+		int upRight_pos = up_right(a);
+		int downLeft_pos = down_left(a);
+		int downRight_pos = down_right(a);
 		vector<int> possible_move { left_pos, right_pos, up_pos, down_pos,
 				upLeft_pos, upRight_pos, downLeft_pos, downRight_pos };
 		int m = 0;
@@ -303,13 +304,8 @@ int find_direction_without_food(Ant *ant, int *cells, int fraction, int min,
 int come_back_with_food(Ant *ant, int source) {
 	int a = ant->currentPosition;
 	int possible_move[] =
-			{ position_left(a, dimension * dimension), position_right(a,
-					dimension * dimension), position_up(a,
-					dimension * dimension), position_down(a,
-					dimension * dimension), up_left(a, dimension * dimension),
-					up_right(a, dimension * dimension), down_left(a,
-							dimension * dimension), down_right(a,
-							dimension * dimension) };
+			{ position_left(a), position_right(a), position_up(a), position_down(a), up_left(a),
+					up_right(a), down_left(a), down_right(a) };
 	int toCheck = -1;
 	int max = -1;
 	int min = INT_MAX;
@@ -331,30 +327,30 @@ int count_ant_around(int pos, vector<Ant> ants, vector<int> &around, int num) {
 	for (int a = 0; a < ants.size(); a++)
 		if (ants[a].food && not_in(around, ants[a].currentPosition)
 				&& (ants[a].currentPosition
-						== position_left(pos, dimension * dimension)
+						== position_left(pos)
 						|| ants[a].currentPosition
-								== position_right(pos, dimension * dimension)
+								== position_right(pos)
 						|| ants[a].currentPosition
-								== position_down(pos, dimension * dimension)
-						|| position_up(pos, dimension * dimension)
+								== position_down(pos)
+						|| position_up(pos)
 								== ants[a].currentPosition
-						|| up_right(pos, dimension * dimension)
+						|| up_right(pos)
 								== ants[a].currentPosition
-						|| up_left(pos, dimension * dimension)
+						|| up_left(pos)
 								== ants[a].currentPosition
-						|| down_left(pos, dimension * dimension)
+						|| down_left(pos)
 								== ants[a].currentPosition
-						|| down_right(pos, dimension * dimension)
+						|| down_right(pos)
 								== ants[a].currentPosition))
 			around.push_back(ants[a].currentPosition);
 	if (num > 0) {
-		count_ant_around(position_left(pos, dimension * dimension), ants,
+		count_ant_around(position_left(pos), ants,
 				around, num);
-		count_ant_around(position_right(pos, dimension * dimension), ants,
+		count_ant_around(position_right(pos), ants,
 				around, num);
-		count_ant_around(position_up(pos, dimension * dimension), ants, around,
+		count_ant_around(position_up(pos), ants, around,
 				num);
-		count_ant_around(position_down(pos, dimension * dimension), ants,
+		count_ant_around(position_down(pos), ants,
 				around, num);
 	}
 	return around.size();
@@ -370,21 +366,21 @@ void propagate(int *cells, int *left_received, int *right_received,
 	while (true) {
 		dec = val * 0.2;
 		if (d == RIGHT)
-			l = position_right(cP, dimension * dimension);
+			l = position_right(cP);
 		if (d == LEFT)
-			l = position_left(cP, dimension * dimension);
+			l = position_left(cP);
 		if (d == UP)
-			l = position_up(cP, dimension * dimension);
+			l = position_up(cP);
 		if (d == DOWN)
-			l = position_down(cP, dimension * dimension);
+			l = position_down(cP);
 		if (d == DOWN_LEFT)
-			l = down_left(cP, dimension * dimension);
+			l = down_left(cP);
 		if (d == DOWN_RIGHT)
-			l = down_right(cP, dimension * dimension);
+			l = down_right(cP);
 		if (d == UP_LEFT)
-			l = up_left(cP, dimension * dimension);
+			l = up_left(cP);
 		if (d == UP_RIGHT)
-			l = up_right(cP, dimension * dimension);
+			l = up_right(cP);
 		if (l > min - 1 && l < max) {
 			val = val - dec;
 			cP = l;
@@ -585,7 +581,7 @@ int main(int argc, char **argv) {
 	if (rank_process == prc_source) {
 		for (int z = 0; z < BEGIN_ANT; z++)
 			my_ants.push_back(
-					Ant(randomSource1, (dimension * dimension),
+					Ant(randomSource1, max_num,
 							randomSource1 / dimension,
 							randomSource1 % dimension));
 	}
@@ -611,7 +607,7 @@ int main(int argc, char **argv) {
 	while (FOOD > 0) {
 		if (rank_process == prc_source && epoch % 5 == 0)
 			my_ants.push_back(
-					Ant(randomSource1, (dimension * dimension),
+					Ant(randomSource1, max_num,
 							randomSource1 / dimension,
 							randomSource1 % dimension));
 		left_ants.clear();
