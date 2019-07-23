@@ -70,10 +70,12 @@ The implementation is very simple, each cell is colored based on the amount of p
 
 
 ## Results (ONE PROCESS VS MORE)
+How we know a mpi process behavior change in relation of machine, the machine used for the test was a 8 GB RAM with
+Intel(R) Core(TM) i7-8750H CPU @ 2.20GHz.
 
-
-## Conclusion
-
+<p align="center">
+  <img src="https://github.com/GB1609/AntSystem/blob/master/readme_img/results.png">
+</p>
 
 
 ## Technologies
