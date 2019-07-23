@@ -10,13 +10,15 @@
 
 using namespace std;
 
-const int BEGIN_ANT = 25;
-const int dimension = 50;
-const int width_gui = 15;
+const int BEGIN_ANT = 50;
+const int dimension = 100;
+const int width_gui = 3;
 const int BEGIN_FOOD = 750;
 const int POSSIBLE_DIRECTION = 8;
 const int AROUND = 2;
-const bool gui_on = true;
+const int RF1=dimension+2;
+const int RS1=dimension*dimension -(dimension)-1;
+const bool gui_on = false;
 
 struct Ant {
 	bool food;
@@ -546,11 +548,11 @@ int main(int argc, char **argv) {
 		randomSource1 = randomFood1;
 		while (abs(randomFood1 - randomSource1) < (dimension * dimension) / 3)
 			randomSource1 = dist(rng);
-		randomFood1 = 124;
-		randomSource1 = 2375;
+		randomFood1 = RF1;
+		randomSource1 = RS1;
 	}
-	randomFood1 = 101;
-	randomSource1 = 2379;
+	randomFood1 = RF1;
+	randomSource1 = RS1;
 
 	int prc_source = ((randomSource1 / dimension) / BLOCKROWS);
 	int prc_food = ((randomFood1 / dimension) / BLOCKROWS);
