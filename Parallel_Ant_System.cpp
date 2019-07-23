@@ -297,8 +297,6 @@ int find_direction_without_food(Ant *ant, int *cells, int fraction, int min,
 			}
 		}
 	}
-	cout << "TO RETURN  " << to_return << endl;
-
 	return to_return;
 }
 

@@ -53,7 +53,15 @@ Le comunicazioni avvengono tramite l'ausilio di 3 datatype:
 
 ## GUI implementation
 The gui was implemented with Allegro, a a cross-platform library. 
+The implementation is very simple, each cell is colored based on the amount of pheromone in it:
+1. The higher the pheromone, the higher the shade of red
+1. The lower it is the less it's red.
+1. The food cell is colored green
+1. The source cell is colored blue
+1. Every cell with an ant without food is colored black
+1. Every cell with an ant with food is colored yellow
 
+![Screenshot](https://github.com/GB1609/AntSystem/blob/master/readme_img/image0.png)
 
 
 ## Results
